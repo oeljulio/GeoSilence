@@ -6,9 +6,9 @@ Esta actualización de mantenimiento (**v1.1.1**) soluciona fallos detectados en
 
 ### 🐛 Correcciones y Mejoras
 
-* **🗺️ Renderizado de Teselas de OpenStreetMap:** Configuración de `User-Agent` personalizado e invalidación de tamaño para resolver el lienzo en blanco y cumplir con las directivas del servidor de teselas cartográficas.
-* **👆 Restauración del Desplazamiento Vertical:** Control direccional de gestos táctiles mediante `requestDisallowInterceptTouchEvent`, permitiendo hacer scroll vertical sin bloqueos sobre la vista del mapa cuando no se está arrastrando deliberadamente.
-* **📱 Corrección de Desbordamiento en Pestañas:** Ajuste de línea única y truncamiento con `TextOverflow.Ellipsis` en la barra de navegación para evitar saltos de línea en la pestaña "Ubicación".
+* **🗺️ Renderizado de Mapa:** Eliminación del `User-Agent` personalizado para evitar bloqueos por parte del servidor de mapas, resolviendo el problema de la pantalla en blanco.
+* **👆 Interacción Táctil:** Optimización de la gestión de eventos táctiles en la vista del mapa para asegurar un desplazamiento y zoom fluidos.
+* **📱 Interfaz de Usuario:** Implementación de `ScrollableTabRow` para garantizar que los nombres de las pestañas (como "Ubicación") se muestren completos sin truncamiento.
 
 ---
 

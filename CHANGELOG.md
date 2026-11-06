@@ -7,9 +7,9 @@ Todos los cambios notables en este proyecto se documentan en este archivo, sigui
 ## [1.1.1] - 2026-11-06
 
 ### 🐛 Correcciones
-* **🗺️ Renderizado de Teselas de OpenStreetMap:** Inicializado `User-Agent` personalizado e invalidación de tamaño para resolver el recuadro blanco y cumplir con la política de uso del servidor de teselas.
-* **👆 Desplazamiento Vertical:** Control de interceptación táctil (`requestDisallowInterceptTouchEvent`) basado en dirección y umbral táctil para desbloquear el scroll vertical sobre el mapa.
-* **📱 Desbordamiento de Pestañas:** Aplicada restricción de línea única y truncamiento elíptico en `TabRow` para evitar saltos de línea en la pestaña "Ubicación".
+* **🗺️ Renderizado de Mapa:** Eliminado el `User-Agent` personalizado para evitar bloqueos del servidor de teselas de OpenStreetMap, solucionando el problema del mapa en blanco.
+* **👆 Interacción Táctil:** Simplificada la lógica de interceptación de toques en el WebView para permitir un desplazamiento y zoom fluidos sin interferencias del scroll de Compose.
+* **📱 Interfaz de Usuario:** Sustituido `TabRow` por `ScrollableTabRow` para evitar el truncamiento del texto en las pestañas (solucionando el problema de "ubicaci...").
 
 ---
 

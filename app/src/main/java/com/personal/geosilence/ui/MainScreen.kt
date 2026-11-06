@@ -181,7 +181,13 @@ fun MainScreen(
             )
 
             // Tabs for navigation: Zonas, Apps a Bloquear, Historial, Ajustes
-            TabRow(selectedTabIndex = selectedTab) {
+            ScrollableTabRow(
+                selectedTabIndex = selectedTab,
+                edgePadding = 12.dp,
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.primary,
+                divider = { HorizontalDivider() }
+            ) {
                 Tab(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
@@ -189,7 +195,8 @@ fun MainScreen(
                         Text(
                             text = "Ubicación",
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Clip,
+                            softWrap = false
                         )
                     },
                     icon = { Icon(Icons.Default.LocationOn, contentDescription = null) }
@@ -201,7 +208,8 @@ fun MainScreen(
                         Text(
                             text = "Apps (${prefs.getBlockedPackages().size})",
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Clip,
+                            softWrap = false
                         )
                     },
                     icon = { Icon(Icons.Default.Apps, contentDescription = null) }
@@ -213,7 +221,8 @@ fun MainScreen(
                         Text(
                             text = "Historial",
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Clip,
+                            softWrap = false
                         )
                     },
                     icon = { Icon(Icons.Default.History, contentDescription = null) }
@@ -225,7 +234,8 @@ fun MainScreen(
                         Text(
                             text = "Ajustes",
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Clip,
+                            softWrap = false
                         )
                     },
                     icon = { Icon(Icons.Default.Settings, contentDescription = null) }

@@ -76,35 +76,15 @@ fun InteractiveMapView(
                             settings.setSupportZoom(true)
                             settings.builtInZoomControls = false
                             settings.displayZoomControls = false
-                            settings.userAgentString = ctx.packageName
-
-                            val touchSlop = ViewConfiguration.get(ctx).scaledTouchSlop
-                            var startX = 0f
-                            var startY = 0f
 
                             // Permitir arrastre y zoom en el mapa sin que el scroll de Compose lo intercepte
                             setOnTouchListener { v, event ->
                                 when (event.actionMasked) {
                                     MotionEvent.ACTION_DOWN -> {
-                                        startX = event.x
-                                        startY = event.y
                                         v.parent?.requestDisallowInterceptTouchEvent(true)
                                     }
                                     MotionEvent.ACTION_POINTER_DOWN -> {
                                         v.parent?.requestDisallowInterceptTouchEvent(true)
-                                    }
-                                    MotionEvent.ACTION_MOVE -> {
-                                        if (event.pointerCount > 1) {
-                                            v.parent?.requestDisallowInterceptTouchEvent(true)
-                                        } else {
-                                            val dx = abs(event.x - startX)
-                                            val dy = abs(event.y - startY)
-                                            if (dy > touchSlop && dy > dx) {
-                                                v.parent?.requestDisallowInterceptTouchEvent(false)
-                                            } else if (dx > touchSlop && dx > dy) {
-                                                v.parent?.requestDisallowInterceptTouchEvent(true)
-                                            }
-                                        }
                                     }
                                     MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                                         v.parent?.requestDisallowInterceptTouchEvent(false)
