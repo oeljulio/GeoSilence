@@ -12,8 +12,8 @@ android {
         applicationId = "com.personal.geosilence"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -63,6 +63,7 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.play.services.location)
     implementation(libs.gson)
+    implementation(libs.androidx.work)
 
     debugImplementation(libs.androidx.ui.tooling)
 }

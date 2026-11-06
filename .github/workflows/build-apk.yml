@@ -52,5 +52,6 @@ jobs:
         with:
           files: build-output/GeoSilence-debug.apk
           name: "GeoSilence ${{ github.ref_name }}"
+          body_path: RELEASE_NOTES.md
           draft: false
           prerelease: false

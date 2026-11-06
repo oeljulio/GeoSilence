@@ -24,3 +24,35 @@ data class BlockedNotificationRecord(
     val title: String,
     val timestamp: Long = System.currentTimeMillis()
 )
+
+enum class HistoryRetentionCycle(
+    val id: String,
+    val title: String,
+    val description: String,
+    val maxAgeMillis: Long?
+) {
+    DAILY(
+        id = "daily",
+        title = "Diario",
+        description = "Eliminar registros con más de 24 horas",
+        maxAgeMillis = 24 * 60 * 60 * 1000L
+    ),
+    WEEKLY(
+        id = "weekly",
+        title = "Semanal",
+        description = "Eliminar registros con más de 7 días (predeterminado)",
+        maxAgeMillis = 7 * 24 * 60 * 60 * 1000L
+    ),
+    NEVER(
+        id = "never",
+        title = "Nunca",
+        description = "Conservar todo el historial sin límite de tiempo",
+        maxAgeMillis = null
+    );
+
+    companion object {
+        fun fromId(id: String?): HistoryRetentionCycle {
+            return entries.firstOrNull { it.id.equals(id, ignoreCase = true) } ?: WEEKLY
+        }
+    }
+}

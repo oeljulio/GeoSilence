@@ -18,6 +18,8 @@ class AppPreferences(context: Context) {
         private const val KEY_ZONES_JSON = "zones_json"
         private const val KEY_BLOCKED_COUNT = "blocked_count"
         private const val KEY_RECENT_LOGS = "recent_logs"
+        private const val KEY_HISTORY_RETENTION = "history_retention_cycle"
+        private const val MAX_LOGS_LIMIT = 1000
 
         @Volatile
         private var instance: AppPreferences? = null
@@ -40,6 +42,13 @@ class AppPreferences(context: Context) {
     var blockedCount: Int
         get() = prefs.getInt(KEY_BLOCKED_COUNT, 0)
         private set(value) = prefs.edit().putInt(KEY_BLOCKED_COUNT, value).apply()
+
+    var historyRetention: HistoryRetentionCycle
+        get() {
+            val savedId = prefs.getString(KEY_HISTORY_RETENTION, HistoryRetentionCycle.WEEKLY.id)
+            return HistoryRetentionCycle.fromId(savedId)
+        }
+        set(value) = prefs.edit().putString(KEY_HISTORY_RETENTION, value.id).apply()
 
     fun incrementBlockedCount() {
         blockedCount = blockedCount + 1
@@ -81,12 +90,31 @@ class AppPreferences(context: Context) {
     fun addBlockedLog(record: BlockedNotificationRecord) {
         val currentLogs = getRecentLogs().toMutableList()
         currentLogs.add(0, record)
-        if (currentLogs.size > 50) {
+        if (currentLogs.size > MAX_LOGS_LIMIT) {
             currentLogs.removeAt(currentLogs.size - 1)
         }
         val json = gson.toJson(currentLogs)
         prefs.edit().putString(KEY_RECENT_LOGS, json).apply()
         incrementBlockedCount()
+        // Ejecución preventiva de auto-limpieza
+        performAutoCleanup()
+    }
+
+    /**
+     * Elimina registros del historial que superen el límite de antigüedad configurado.
+     * @return Cantidad de registros eliminados.
+     */
+    fun performAutoCleanup(retention: HistoryRetentionCycle = historyRetention): Int {
+        val maxAge = retention.maxAgeMillis ?: return 0
+        val cutoffTime = System.currentTimeMillis() - maxAge
+        val currentLogs = getRecentLogs()
+        val filteredLogs = currentLogs.filter { it.timestamp >= cutoffTime }
+        val removedCount = currentLogs.size - filteredLogs.size
+        if (removedCount > 0) {
+            val json = gson.toJson(filteredLogs)
+            prefs.edit().putString(KEY_RECENT_LOGS, json).apply()
+        }
+        return removedCount
     }
 
     fun getRecentLogs(): List<BlockedNotificationRecord> {

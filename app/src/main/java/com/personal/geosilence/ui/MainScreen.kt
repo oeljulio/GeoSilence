@@ -13,8 +13,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -35,6 +37,7 @@ import com.personal.geosilence.data.AppPreferences
 import com.personal.geosilence.data.GeofenceZone
 import com.personal.geosilence.data.InstalledAppInfo
 import com.personal.geosilence.location.GeofenceManager
+import com.personal.geosilence.ui.map.InteractiveMapView
 import com.personal.geosilence.ui.theme.StatusGreen
 import com.personal.geosilence.ui.theme.StatusRed
 import kotlinx.coroutines.Dispatchers
@@ -177,7 +180,7 @@ fun MainScreen(
                 }
             )
 
-            // Tabs for navigation: Zonas, Apps a Bloquear, Historial
+            // Tabs for navigation: Zonas, Apps a Bloquear, Historial, Ajustes
             TabRow(selectedTabIndex = selectedTab) {
                 Tab(
                     selected = selectedTab == 0,
@@ -196,6 +199,12 @@ fun MainScreen(
                     onClick = { selectedTab = 2 },
                     text = { Text("Historial") },
                     icon = { Icon(Icons.Default.History, contentDescription = null) }
+                )
+                Tab(
+                    selected = selectedTab == 3,
+                    onClick = { selectedTab = 3 },
+                    text = { Text("Ajustes") },
+                    icon = { Icon(Icons.Default.Settings, contentDescription = null) }
                 )
             }
 
@@ -256,7 +265,13 @@ fun MainScreen(
                     onClear = {
                         prefs.clearLogs()
                         blockedCount = 0
-                    }
+                    },
+                    onNavigateToSettings = { selectedTab = 3 }
+                )
+
+                3 -> SettingsScreen(
+                    prefs = prefs,
+                    onNavigateToHistory = { selectedTab = 2 }
                 )
             }
         }
@@ -373,24 +388,107 @@ fun LocationConfigScreen(
     onSaveZone: () -> Unit
 ) {
     var saveSuccessMessage by remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
+
+    val latDouble = latitude.toDoubleOrNull() ?: 0.0
+    val lngDouble = longitude.toDoubleOrNull() ?: 0.0
+    val presetRadii = listOf(100f, 250f, 500f, 1000f, 2000f)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(scrollState)
             .padding(16.dp)
     ) {
         Text("Configurar Zona Geográfica", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         OutlinedTextField(
             value = zoneName,
             onValueChange = onZoneNameChange,
-            label = { Text("Nombre del lugar (ej. Oficina, Escuela)") },
+            label = { Text("Nombre del lugar (ej. Oficina, Escuela, Casa)") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
         )
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Vista interactiva del mapa con OpenStreetMap y Leaflet
+        InteractiveMapView(
+            latitude = latDouble,
+            longitude = lngDouble,
+            radiusMeters = radius,
+            onLocationSelected = { newLat, newLng ->
+                onLatitudeChange(String.format(Locale.US, "%.6f", newLat))
+                onLongitudeChange(String.format(Locale.US, "%.6f", newLng))
+            }
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Control de Radio Interactivo
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Radio de Silencio:",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Surface(
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = if (radius >= 1000f) {
+                                String.format(Locale.getDefault(), "%.1f km", radius / 1000f)
+                            } else {
+                                "${radius.toInt()} m"
+                            },
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Slider(
+                    value = radius,
+                    onValueChange = onRadiusChange,
+                    valueRange = 50f..3000f,
+                    steps = 58
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    presetRadii.forEach { preset ->
+                        val label = if (preset >= 1000f) "${(preset / 1000).toInt()} km" else "${preset.toInt()} m"
+                        val isSelected = Math.abs(radius - preset) < 25f
+
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { onRadiusChange(preset) },
+                            label = { Text(label, fontSize = 11.sp) }
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
@@ -420,16 +518,6 @@ fun LocationConfigScreen(
             Spacer(modifier = Modifier.width(8.dp))
             Text("Usar mi ubicación GPS actual")
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text("Radio de la zona: ${radius.toInt()} metros", fontWeight = FontWeight.Medium)
-        Slider(
-            value = radius,
-            onValueChange = onRadiusChange,
-            valueRange = 50f..1500f,
-            steps = 29
-        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -585,9 +673,11 @@ fun AppRowItem(
 @Composable
 fun HistoryScreen(
     prefs: AppPreferences,
-    onClear: () -> Unit
+    onClear: () -> Unit,
+    onNavigateToSettings: () -> Unit = {}
 ) {
-    val logs = remember { prefs.getRecentLogs() }
+    var logs by remember { mutableStateOf(prefs.getRecentLogs()) }
+    val currentRetention = remember { prefs.historyRetention }
     val dateFormatter = remember { SimpleDateFormat("dd/MM HH:mm:ss", Locale.getDefault()) }
 
     Column(
@@ -595,6 +685,54 @@ fun HistoryScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
+        // Banner con información de la auto-eliminación periódica activa
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 12.dp)
+                .clickable { onNavigateToSettings() },
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f))
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.AutoDelete,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(
+                            text = "Auto-eliminación: ${currentRetention.title}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Text(
+                            text = currentRetention.description,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.outline
+                        )
+                    }
+                }
+                Text(
+                    text = "Ajustes",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -602,10 +740,13 @@ fun HistoryScreen(
         ) {
             Text("Notificaciones Descartadas", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             if (logs.isNotEmpty()) {
-                TextButton(onClick = onClear) {
+                TextButton(onClick = {
+                    onClear()
+                    logs = emptyList()
+                }) {
                     Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Limpiar")
+                    Text("Limpiar todo")
                 }
             }
         }

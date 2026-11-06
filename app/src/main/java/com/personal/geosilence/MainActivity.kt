@@ -18,6 +18,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
+import com.personal.geosilence.service.HistoryCleanupScheduler
 import com.personal.geosilence.ui.MainScreen
 import com.personal.geosilence.ui.theme.GeoSilenceTheme
 
@@ -55,6 +56,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         updatePermissionStatus()
         requestIgnoreBatteryOptimizations()
+        HistoryCleanupScheduler.schedulePeriodicCleanup(applicationContext)
 
         setContent {
             GeoSilenceTheme {

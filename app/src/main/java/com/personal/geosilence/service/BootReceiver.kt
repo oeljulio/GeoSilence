@@ -17,6 +17,8 @@ class BootReceiver : BroadcastReceiver() {
                 val geofenceManager = GeofenceManager(context)
                 geofenceManager.registerGeofences(zones)
             }
+            // Restaurar programación de auto-limpieza de historial
+            HistoryCleanupScheduler.schedulePeriodicCleanup(context)
         }
     }
 }
