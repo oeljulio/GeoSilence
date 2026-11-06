@@ -4,6 +4,15 @@ Todos los cambios notables en este proyecto se documentan en este archivo, sigui
 
 ---
 
+## [1.1.1] - 2026-11-06
+
+### 🐛 Correcciones
+* **🗺️ Renderizado de Teselas de OpenStreetMap:** Inicializado `User-Agent` personalizado e invalidación de tamaño para resolver el recuadro blanco y cumplir con la política de uso del servidor de teselas.
+* **👆 Desplazamiento Vertical:** Control de interceptación táctil (`requestDisallowInterceptTouchEvent`) basado en dirección y umbral táctil para desbloquear el scroll vertical sobre el mapa.
+* **📱 Desbordamiento de Pestañas:** Aplicada restricción de línea única y truncamiento elíptico en `TabRow` para evitar saltos de línea en la pestaña "Ubicación".
+
+---
+
 ## [1.1.0] - 2026-11-06
 
 ### 🚀 Nuevas Funcionalidades

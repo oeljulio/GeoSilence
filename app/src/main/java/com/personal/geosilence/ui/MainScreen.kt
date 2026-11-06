@@ -185,25 +185,49 @@ fun MainScreen(
                 Tab(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
-                    text = { Text("Ubicación") },
+                    text = {
+                        Text(
+                            text = "Ubicación",
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    },
                     icon = { Icon(Icons.Default.LocationOn, contentDescription = null) }
                 )
                 Tab(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
-                    text = { Text("Apps (${prefs.getBlockedPackages().size})") },
+                    text = {
+                        Text(
+                            text = "Apps (${prefs.getBlockedPackages().size})",
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    },
                     icon = { Icon(Icons.Default.Apps, contentDescription = null) }
                 )
                 Tab(
                     selected = selectedTab == 2,
                     onClick = { selectedTab = 2 },
-                    text = { Text("Historial") },
+                    text = {
+                        Text(
+                            text = "Historial",
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    },
                     icon = { Icon(Icons.Default.History, contentDescription = null) }
                 )
                 Tab(
                     selected = selectedTab == 3,
                     onClick = { selectedTab = 3 },
-                    text = { Text("Ajustes") },
+                    text = {
+                        Text(
+                            text = "Ajustes",
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    },
                     icon = { Icon(Icons.Default.Settings, contentDescription = null) }
                 )
             }

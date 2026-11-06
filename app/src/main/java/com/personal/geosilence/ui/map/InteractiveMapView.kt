@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.os.Handler
 import android.os.Looper
 import android.view.MotionEvent
+import android.view.ViewConfiguration
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -19,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import kotlin.math.abs
 
 /**
  * Componente Compose para el mapa interactivo con OpenStreetMap.
@@ -74,12 +76,35 @@ fun InteractiveMapView(
                             settings.setSupportZoom(true)
                             settings.builtInZoomControls = false
                             settings.displayZoomControls = false
+                            settings.userAgentString = ctx.packageName
+
+                            val touchSlop = ViewConfiguration.get(ctx).scaledTouchSlop
+                            var startX = 0f
+                            var startY = 0f
 
                             // Permitir arrastre y zoom en el mapa sin que el scroll de Compose lo intercepte
                             setOnTouchListener { v, event ->
-                                when (event.action) {
-                                    MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
+                                when (event.actionMasked) {
+                                    MotionEvent.ACTION_DOWN -> {
+                                        startX = event.x
+                                        startY = event.y
                                         v.parent?.requestDisallowInterceptTouchEvent(true)
+                                    }
+                                    MotionEvent.ACTION_POINTER_DOWN -> {
+                                        v.parent?.requestDisallowInterceptTouchEvent(true)
+                                    }
+                                    MotionEvent.ACTION_MOVE -> {
+                                        if (event.pointerCount > 1) {
+                                            v.parent?.requestDisallowInterceptTouchEvent(true)
+                                        } else {
+                                            val dx = abs(event.x - startX)
+                                            val dy = abs(event.y - startY)
+                                            if (dy > touchSlop && dy > dx) {
+                                                v.parent?.requestDisallowInterceptTouchEvent(false)
+                                            } else if (dx > touchSlop && dx > dy) {
+                                                v.parent?.requestDisallowInterceptTouchEvent(true)
+                                            }
+                                        }
                                     }
                                     MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                                         v.parent?.requestDisallowInterceptTouchEvent(false)
@@ -92,6 +117,7 @@ fun InteractiveMapView(
                                 override fun onPageFinished(view: WebView?, url: String?) {
                                     super.onPageFinished(view, url)
                                     isMapLoaded = true
+                                    view?.evaluateJavascript("if (window.map) { window.map.invalidateSize(); }", null)
                                 }
                             }
 

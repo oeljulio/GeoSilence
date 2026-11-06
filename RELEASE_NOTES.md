@@ -1,30 +1,16 @@
-## 🚀 GeoSilence v1.1.0 - Mapa Interactivo y Auto-limpieza de Historial
+## 🛠️ GeoSilence v1.1.1 - Corrección de Renderizado y Mejoras de Interfaz
 
-Nos complace presentar la versión **v1.1.0** de **GeoSilence**, incorporando un mapa interactivo para delimitar tus zonas de silencio con total precisión y un sistema inteligente de auto-eliminación periódica del historial de notificaciones.
+Esta actualización de mantenimiento (**v1.1.1**) soluciona fallos detectados en el renderizado cartográfico y optimiza la navegación táctil y visual de la aplicación.
 
 ---
 
-### 🌟 Novedades Destacadas
+### 🐛 Correcciones y Mejoras
 
-#### 1. 🗺️ Selección de Zona Geográfica en Mapa con Cobertura Dinámica
-* **Mapa Interactivo:** Integración de mapa completo con OpenStreetMap y Leaflet. Puedes seleccionar el centro de la zona de silencio tocando cualquier lugar o arrastrando el pin directamente.
-* **Control de Radio en Metros y Kilómetros:** Deslizador continuo interactivo (50 m - 3.000 m) y botones de acceso rápido (100 m, 250 m, 500 m, 1 km, 2 km).
-* **Visualización Dinámica en Tiempo Real:** Visualiza sobre el mapa una cobertura circular semitransparente que se redimensiona al instante mientras ajustas el radio o mueves el pin.
-
-#### 2. 🧹 Auto-eliminación Periódica del Historial de Notificaciones
-* **Limpieza en Segundo Plano:** Tareas periódicas gestionadas con `WorkManager` que depuran registros obsoletos sin gastar batería ni ralentizar la aplicación.
-* **Selector de Frecuencia Configurable:**
-  * **Diario:** Descarta notificaciones con más de 24 horas de antigüedad.
-  * **Semanal (predeterminado):** Descarta registros con más de 7 días.
-  * **Nunca:** Preserva todo el historial de eventos.
-* **Limpieza Inmediata Manual:** Posibilidad de ejecutar la purga al instante con confirmación del número de elementos eliminados.
-
-#### 3. ⚙️ Nueva Pestaña de Ajustes
-* Gestión centralizada de las preferencias de retención.
-* Accesos rápidos para conceder permisos de acceso a notificaciones y deshabilitar optimizaciones de batería.
-* Banner de estado en la pestaña de Historial que muestra el ciclo activo.
+* **🗺️ Renderizado de Teselas de OpenStreetMap:** Configuración de `User-Agent` personalizado e invalidación de tamaño para resolver el lienzo en blanco y cumplir con las directivas del servidor de teselas cartográficas.
+* **👆 Restauración del Desplazamiento Vertical:** Control direccional de gestos táctiles mediante `requestDisallowInterceptTouchEvent`, permitiendo hacer scroll vertical sin bloqueos sobre la vista del mapa cuando no se está arrastrando deliberadamente.
+* **📱 Corrección de Desbordamiento en Pestañas:** Ajuste de línea única y truncamiento con `TextOverflow.Ellipsis` en la barra de navegación para evitar saltos de línea en la pestaña "Ubicación".
 
 ---
 
 ### 📦 Artefactos de Compilación
-* **APK Generado:** `GeoSilence-debug.apk` adjunto a esta release, compilado mediante GitHub Actions con JDK 17 y Gradle 8.5.2.
+* **APK Generado:** `GeoSilence-debug.apk` adjunto a esta release, compilado automáticamente mediante GitHub Actions.
