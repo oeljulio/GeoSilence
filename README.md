@@ -28,35 +28,6 @@ Para que la app funcione correctamente en segundo plano, se gestionan 3 permisos
 
 ---
 
-## 🛠️ Cómo subir este proyecto a tu GitHub desde Termux
-
-1. **Configura tu usuario de Git (si es la primera vez):**
-   ```bash
-   git config --global user.name "Tu Nombre o Usuario"
-   git config --global user.email "tu_correo@ejemplo.com"
-   ```
-
-2. **Crea un repositorio nuevo y vacío en [GitHub.com](https://github.com/new)** (por ejemplo llamado `geosilence` o `miapp`). *No marques la casilla de inicializar con README ni .gitignore*.
-
-3. **Inicializa y sube tu código:**
-   ```bash
-   git init
-   git add .
-   git commit -m "feat: GeoSilence - Aplicación Android de bloqueo de notificaciones por ubicación"
-   git branch -M main
-   git remote add origin https://github.com/TU_USUARIO/TU_REPOSITORIO.git
-   git push -u origin main
-   ```
-   *(Nota: Para el push te pedirá tu usuario de GitHub y un **Personal Access Token (classic)** con permisos de `repo` y `workflow`)*.
-
-4. **Para generar un Release descargable directamente:**
-   ```bash
-   git tag v1.0.0
-   git push origin v1.0.0
-   ```
-
----
-
 ## 🧱 Estructura del Proyecto
 
 ```
