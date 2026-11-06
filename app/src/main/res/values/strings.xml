@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">GeoSilence</string>
+    <string name="notification_service_label">GeoSilence Servicio de Bloqueo</string>
+</resources>

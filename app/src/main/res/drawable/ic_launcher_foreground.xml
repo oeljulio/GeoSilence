@@ -1,0 +1,18 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#6200EE"
+        android:pathData="M54,20 C35.2,20 20,35.2 20,54 C20,72.8 35.2,88 54,88 C72.8,88 88,72.8 88,54 C88,35.2 72.8,20 54,20 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,34 C49.6,34 46,37.6 46,42 L46,52 L42,56 L42,58 L66,58 L66,56 L62,52 L62,42 C62,37.6 58.4,34 54,34 Z M51,60 C51,61.7 52.3,63 54,63 C55.7,63 57,61.7 57,60 L51,60 Z" />
+    <!-- Slash across bell representing silence/block -->
+    <path
+        android:strokeColor="#FF3333"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:pathData="M40,40 L68,68" />
+</vector>
