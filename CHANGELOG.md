@@ -4,6 +4,18 @@ Todos los cambios notables en este proyecto se documentan en este archivo, sigui
 
 ---
 
+## [1.1.2] - 2026-11-07
+
+### 🐛 Correcciones y Mejoras
+* **📱 Interfaz de Usuario:** Sustituido `TabRow` por `ScrollableTabRow` en `MainScreen` para mostrar títulos de pestañas completos sin cortes ni truncamiento ("Ubicación", etc.).
+* **👆 Interacción Táctil en Mapa:** Simplificación de la lógica de interceptación táctil en `InteractiveMapView` para permitir desplazamiento y zoom fluidos en Leaflet sin colisiones con el scroll padre de Compose.
+* **🗺️ Renderizado de Mapa:** Optimización en la carga de teselas cartográficas de OpenStreetMap eliminando bloqueos de cabecera.
+
+### 📚 Documentación y Directrices
+* **🤖 Directrices de IA y Protocolo de Release:** Incorporado `AGENTS.md` con especificación técnica de la aplicación, estándares de desarrollo, arquitectura y protocolo formal de auditoría y gestión de releases.
+
+---
+
 ## [1.1.1] - 2026-11-06
 
 ### 🐛 Correcciones
