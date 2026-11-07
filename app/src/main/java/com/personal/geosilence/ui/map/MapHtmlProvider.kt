@@ -2,18 +2,34 @@ package com.personal.geosilence.ui.map
 
 /**
  * Proveedor de HTML5/CSS/JavaScript con Leaflet y OpenStreetMap para el mapa interactivo.
- * Soporta selección de punto por toque, arrastre de pin y visualización en tiempo real
- * del círculo de radio configurable.
+ * Soporta incrustación directa de assets CSS/JS de Leaflet, panel de diagnóstico de errores en pantalla,
+ * selección de punto por toque, arrastre de pin y visualización en tiempo real del círculo de radio configurable.
  */
 object MapHtmlProvider {
 
     fun generateMapHtml(
         latitude: Double,
         longitude: Double,
-        radiusMeters: Float
+        radiusMeters: Float,
+        leafletJs: String? = null,
+        leafletCss: String? = null
     ): String {
         val safeLat = if (latitude == 0.0 && longitude == 0.0) 40.4168 else latitude
         val safeLng = if (latitude == 0.0 && longitude == 0.0) -3.7038 else longitude
+
+        // Si se provee el CSS en memoria se incrusta inline; de lo contrario se usa la URL de respaldo
+        val cssTag = if (leafletCss != null) {
+            "<style>\n$leafletCss\n</style>"
+        } else {
+            """<link rel="stylesheet" href="https://geosilence.app/leaflet/leaflet.css" />"""
+        }
+
+        // Si se provee el JS en memoria se incrusta inline; de lo contrario se usa el script externo de respaldo
+        val jsTag = if (leafletJs != null) {
+            "<script>\n$leafletJs\n</script>"
+        } else {
+            """<script src="https://geosilence.app/leaflet/leaflet.js"></script>"""
+        }
 
         return """
 <!DOCTYPE html>
@@ -21,7 +37,7 @@ object MapHtmlProvider {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <link rel="stylesheet" href="https://geosilence.app/leaflet/leaflet.css" />
+  $cssTag
   <style>
     * {
       -webkit-tap-highlight-color: transparent;
@@ -103,9 +119,21 @@ object MapHtmlProvider {
     <span id="badgeText">Radio: ${radiusMeters.toInt()} m</span>
   </div>
   <div id="map"></div>
+  <div id="mapError" style="position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 2000; background: rgba(220, 38, 38, 0.85); color: #ffffff; font-family: monospace; font-size: 11px; max-height: 50%; overflow: auto; display: none; padding: 6px 10px; border-radius: 4px; white-space: pre-wrap;"></div>
 
-  <script src="https://geosilence.app/leaflet/leaflet.js"></script>
+  $jsTag
   <script>
+    function showMapError(msg) {
+      var errDiv = document.getElementById('mapError');
+      if (errDiv) {
+        errDiv.style.display = 'block';
+        errDiv.innerText += msg + '\n';
+      }
+    }
+    window.onerror = function(msg, src, line) {
+      showMapError('JS: ' + msg + ' (' + line + ')');
+    };
+
     var map;
     var marker;
     var circle;
@@ -142,6 +170,11 @@ object MapHtmlProvider {
     }
 
     function initMap() {
+      if (typeof L === 'undefined') {
+        showMapError('Leaflet no cargó');
+        return;
+      }
+
       map = L.map('map', {
         zoomControl: true,
         attributionControl: true
@@ -228,7 +261,15 @@ object MapHtmlProvider {
       }
     };
 
-    window.onload = initMap;
+    // Inicialización inmediata y robusta del mapa sin depender de window.onload
+    try {
+      initMap();
+    } catch (e) {
+      showMapError('initMap: ' + e);
+    }
+    window.onload = function() {
+      if (map) map.invalidateSize();
+    };
   </script>
 </body>
 </html>

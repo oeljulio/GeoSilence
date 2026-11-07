@@ -4,6 +4,16 @@ Todos los cambios notables en este proyecto se documentan en este archivo, sigui
 
 ---
 
+## [1.1.4] - 2026-11-07
+
+### 🐛 Correcciones y Mejoras
+* **📦 Leaflet Incrustado en el HTML desde Assets:** Lectura directa e incrustación inline de `leaflet.js` y `leaflet.css` desde los assets nativos (`app/src/main/assets/leaflet/`) dentro del HTML generado para el `WebView`, eliminando la dependencia de peticiones externas y resolviendo el mapa en blanco.
+* **⚡ Inicialización Inmediata sin Depender de `window.onload`:** Inicialización directa de `initMap()` mediante bloque `try/catch`, asegurando el renderizado instantáneo del mapa sin esperar al evento `onload` de la ventana.
+* **🚨 Panel de Errores Visible sobre el Mapa:** Inclusión de un contenedor de diagnóstico (`#mapError`) en pantalla y controlador global `window.onerror` para registrar y visualizar cualquier error de JavaScript o fallo de carga de Leaflet.
+* **🛡️ Interceptor de Respaldo (`geosilence.app`):** Conservación íntegra de `shouldInterceptRequest` hacia `https://geosilence.app/leaflet/` como mecanismo de contingencia si no se proporcionan los assets en memoria.
+
+---
+
 ## [1.1.3] - 2026-11-07
 
 ### 🐛 Correcciones y Mejoras

@@ -271,7 +271,7 @@ fun SettingsScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text("GeoSilence", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                Text("Versión 1.1.0", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
+                Text("Versión 1.1.4", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = "Silencio inteligente y selectivo activado por geolocalización.",

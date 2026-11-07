@@ -151,10 +151,33 @@ fun InteractiveMapView(
                                 "AndroidBridge"
                             )
 
+                            // Carga local de assets de Leaflet para incrustación directa en el HTML
+                            val leafletJsContent = try {
+                                ctx.assets.open("leaflet/leaflet.js").bufferedReader().use { it.readText() }
+                            } catch (e: Exception) {
+                                Log.e("InteractiveMapView", "Error leyendo asset leaflet.js", e)
+                                null
+                            }
+
+                            val leafletCssContent = try {
+                                ctx.assets.open("leaflet/leaflet.css").bufferedReader().use { it.readText() }
+                            } catch (e: Exception) {
+                                Log.e("InteractiveMapView", "Error leyendo asset leaflet.css", e)
+                                null
+                            }
+
+                            val (leafletJs, leafletCss) = if (leafletJsContent != null && leafletCssContent != null) {
+                                Pair(leafletJsContent, leafletCssContent)
+                            } else {
+                                Pair(null, null)
+                            }
+
                             val html = MapHtmlProvider.generateMapHtml(
                                 latitude = latitude,
                                 longitude = longitude,
-                                radiusMeters = radiusMeters
+                                radiusMeters = radiusMeters,
+                                leafletJs = leafletJs,
+                                leafletCss = leafletCss
                             )
                             loadDataWithBaseURL("https://geosilence.app/", html, "text/html", "UTF-8", null)
                             webViewRef = this

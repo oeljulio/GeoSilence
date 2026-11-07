@@ -20,7 +20,7 @@ Actúa como un **Ingeniero de Software Senior** especializado en desarrollo nati
   - **Lenguaje:** Kotlin 2.0.21 (JVM target 17).
   - **Framework UI:** Jetpack Compose con Material 3 y Material Icons Extended.
   - **Compatibilidad Android:** `compileSdk = 35`, `targetSdk = 35`, `minSdk = 26` (Android 8.0 Oreo).
-  - **Cartografía y Mapas:** Leaflet 1.9.4 empaquetado localmente en assets (`app/src/main/assets/leaflet/`) y servido mediante interceptación de peticiones (`shouldInterceptRequest` hacia `https://geosilence.app/leaflet/`), junto a teselas OpenStreetMap en `WebView` Android con puente JavaScript (`JavascriptInterface`), soporte táctil desacoplado del scroll contenedor y dibujo reactivo del radio de cobertura.
+  - **Cartografía y Mapas:** Leaflet 1.9.4 empaquetado localmente en assets (`app/src/main/assets/leaflet/`) e incrustado directamente en el HTML leyendo los recursos desde `InteractiveMapView.kt`, con el interceptor de peticiones (`shouldInterceptRequest` hacia `https://geosilence.app/leaflet/`) como respaldo. Inicialización robusta sin depender de `window.onload`, panel visual de errores en pantalla (`#mapError`), teselas OpenStreetMap en `WebView` Android con puente JavaScript (`JavascriptInterface`), soporte táctil desacoplado del scroll contenedor y dibujo reactivo del radio de cobertura.
   - **Geolocalización:** Google Play Services Location (`GeofencingClient`).
   - **Intercepción de Notificaciones:** `NotificationListenerService` (`BIND_NOTIFICATION_LISTENER_SERVICE`).
   - **Tareas Periódicas en Segundo Plano:** Android Jetpack `WorkManager` para auto-eliminación y purga programada del historial de notificaciones.
@@ -64,7 +64,7 @@ Actúa como un **Ingeniero de Software Senior** especializado en desarrollo nati
 3. **Integridad:** No rompas funcionalidades existentes al refactorizar o añadir nuevas características. En particular:
    - Preserva la sincronización bidireccional entre el mapa (`InteractiveMapView.kt` / `MapHtmlProvider.kt`) y el estado Compose (`latitude`, `longitude`, `radiusMeters`).
    - Mantén la interoperabilidad segura en el puente JavaScript (`@JavascriptInterface`).
-   - Preserva la entrega local de recursos Leaflet desde `https://geosilence.app/leaflet/` interceptados en `InteractiveMapView.kt` a través de `ctx.assets.open(...)` para evitar depender de CDNs externas.
+   - Preserva la incrustación local de recursos Leaflet en el HTML leyendo `app/src/main/assets/leaflet/` desde `InteractiveMapView.kt`, manteniendo la interceptación de peticiones hacia `https://geosilence.app/leaflet/` como respaldo redundante, la inicialización directa sin depender de `window.onload` y el panel visual de errores sobre el mapa.
    - No elimines ni alteres inadvertidamente la lógica crítica de segundo plano (`BootReceiver`, `HistoryCleanupWorker`, `NotificationBlockerService`).
 4. **Política de Versiones:** **NO modifiques el número de versión** (`versionCode`, `versionName` en `app/build.gradle.kts`, `README.md`, `CHANGELOG.md` ni `RELEASE_NOTES.md`) a menos que el usuario lo solicite expresamente.
 5. **Preservación de comentarios:** Mantén intactos los comentarios existentes y explicaciones salvo que una modificación de código solicitada los vuelva redundantes o inexactos.
