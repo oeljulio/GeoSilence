@@ -4,6 +4,17 @@ Todos los cambios notables en este proyecto se documentan en este archivo, sigui
 
 ---
 
+## [1.1.3] - 2026-11-07
+
+### 🐛 Correcciones y Mejoras
+* **📦 Carga Local de Leaflet y Modo Offline:** Empaquetado completo de Leaflet 1.9.4 (`leaflet.js` y `leaflet.css`) en los assets nativos de la aplicación (`app/src/main/assets/leaflet/`) y servicio local en el WebView mediante interceptación de peticiones (`shouldInterceptRequest` hacia `https://geosilence.app/leaflet/`), eliminando la dependencia de CDN externa y resolviendo de forma definitiva el problema del mapa en blanco.
+* **🔍 Depuración en WebView:** Asignación de `WebChromeClient` en `InteractiveMapView` con redirección de mensajes de JavaScript a logs de Logcat (`Log.d("GeoMap", ...)`).
+
+### 📚 Documentación y Directrices
+* **🤖 Actualización de `AGENTS.md`:** Documentada la estructura de `assets/leaflet/`, la entrega local mediante interceptación y directrices de integridad para prevenir dependencias de CDN.
+
+---
+
 ## [1.1.2] - 2026-11-07
 
 ### 🐛 Correcciones y Mejoras

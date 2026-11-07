@@ -20,7 +20,7 @@ Actúa como un **Ingeniero de Software Senior** especializado en desarrollo nati
   - **Lenguaje:** Kotlin 2.0.21 (JVM target 17).
   - **Framework UI:** Jetpack Compose con Material 3 y Material Icons Extended.
   - **Compatibilidad Android:** `compileSdk = 35`, `targetSdk = 35`, `minSdk = 26` (Android 8.0 Oreo).
-  - **Cartografía y Mapas:** Leaflet + OpenStreetMap embebido en `WebView` Android con puente JavaScript (`JavascriptInterface`), soporte táctil desacoplado del scroll contenedor y dibujo reactivo del radio de cobertura.
+  - **Cartografía y Mapas:** Leaflet 1.9.4 empaquetado localmente en assets (`app/src/main/assets/leaflet/`) y servido mediante interceptación de peticiones (`shouldInterceptRequest` hacia `https://geosilence.app/leaflet/`), junto a teselas OpenStreetMap en `WebView` Android con puente JavaScript (`JavascriptInterface`), soporte táctil desacoplado del scroll contenedor y dibujo reactivo del radio de cobertura.
   - **Geolocalización:** Google Play Services Location (`GeofencingClient`).
   - **Intercepción de Notificaciones:** `NotificationListenerService` (`BIND_NOTIFICATION_LISTENER_SERVICE`).
   - **Tareas Periódicas en Segundo Plano:** Android Jetpack `WorkManager` para auto-eliminación y purga programada del historial de notificaciones.
@@ -30,6 +30,7 @@ Actúa como un **Ingeniero de Software Senior** especializado en desarrollo nati
 
 - **Estructura de Directorios:**
   - `app/src/main/AndroidManifest.xml`: Declaración central de permisos (`BIND_NOTIFICATION_LISTENER_SERVICE`, `ACCESS_FINE_LOCATION`, `ACCESS_BACKGROUND_LOCATION`, `RECEIVE_BOOT_COMPLETED`, etc.), actividades, receptores y servicios del sistema.
+  - `app/src/main/assets/leaflet/`: Recursos estáticos de Leaflet 1.9.4 (`leaflet.js` y `leaflet.css`) empaquetados en el APK para carga y renderizado local sin dependencia de CDNs externas.
   - `app/src/main/java/com/personal/geosilence/`:
     - `MainActivity.kt`: Actividad principal, orquestación de solicitud de permisos en tiempo de ejecución (ubicación, notificaciones) y punto de anclaje de Jetpack Compose.
     - `data/`:
@@ -63,6 +64,7 @@ Actúa como un **Ingeniero de Software Senior** especializado en desarrollo nati
 3. **Integridad:** No rompas funcionalidades existentes al refactorizar o añadir nuevas características. En particular:
    - Preserva la sincronización bidireccional entre el mapa (`InteractiveMapView.kt` / `MapHtmlProvider.kt`) y el estado Compose (`latitude`, `longitude`, `radiusMeters`).
    - Mantén la interoperabilidad segura en el puente JavaScript (`@JavascriptInterface`).
+   - Preserva la entrega local de recursos Leaflet desde `https://geosilence.app/leaflet/` interceptados en `InteractiveMapView.kt` a través de `ctx.assets.open(...)` para evitar depender de CDNs externas.
    - No elimines ni alteres inadvertidamente la lógica crítica de segundo plano (`BootReceiver`, `HistoryCleanupWorker`, `NotificationBlockerService`).
 4. **Política de Versiones:** **NO modifiques el número de versión** (`versionCode`, `versionName` en `app/build.gradle.kts`, `README.md`, `CHANGELOG.md` ni `RELEASE_NOTES.md`) a menos que el usuario lo solicite expresamente.
 5. **Preservación de comentarios:** Mantén intactos los comentarios existentes y explicaciones salvo que una modificación de código solicitada los vuelva redundantes o inexactos.

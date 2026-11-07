@@ -21,7 +21,7 @@ object MapHtmlProvider {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://geosilence.app/leaflet/leaflet.css" />
   <style>
     * {
       -webkit-tap-highlight-color: transparent;
@@ -104,7 +104,7 @@ object MapHtmlProvider {
   </div>
   <div id="map"></div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://geosilence.app/leaflet/leaflet.js"></script>
   <script>
     var map;
     var marker;

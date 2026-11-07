@@ -3,9 +3,14 @@ package com.personal.geosilence.ui.map
 import android.annotation.SuppressLint
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.MotionEvent
 import android.view.ViewConfiguration
+import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.layout.*
@@ -93,7 +98,40 @@ fun InteractiveMapView(
                                 false
                             }
 
+                            webChromeClient = object : WebChromeClient() {
+                                override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
+                                    Log.d("GeoMap", consoleMessage?.message() ?: "")
+                                    return true
+                                }
+                            }
+
                             webViewClient = object : WebViewClient() {
+                                override fun shouldInterceptRequest(
+                                    view: WebView?,
+                                    request: WebResourceRequest?
+                                ): WebResourceResponse? {
+                                    val uri = request?.url ?: return null
+                                    if (uri.host == "geosilence.app") {
+                                        val path = uri.path ?: return null
+                                        if (path.startsWith("/leaflet/")) {
+                                            return try {
+                                                val assetPath = path.removePrefix("/")
+                                                val inputStream = ctx.assets.open(assetPath)
+                                                val mimeType = when {
+                                                    assetPath.endsWith(".css", ignoreCase = true) -> "text/css"
+                                                    assetPath.endsWith(".js", ignoreCase = true) -> "application/javascript"
+                                                    else -> "application/octet-stream"
+                                                }
+                                                WebResourceResponse(mimeType, "UTF-8", inputStream)
+                                            } catch (e: Exception) {
+                                                Log.e("InteractiveMapView", "Error sirviendo asset de Leaflet: $path", e)
+                                                null
+                                            }
+                                        }
+                                    }
+                                    return null
+                                }
+
                                 override fun onPageFinished(view: WebView?, url: String?) {
                                     super.onPageFinished(view, url)
                                     isMapLoaded = true

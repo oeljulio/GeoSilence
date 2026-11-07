@@ -1,7 +1,7 @@
 # 📍 GeoSilence - Bloqueador de Notificaciones por Ubicación
 
 [![Build Android APK](https://github.com/oeljulio/GeoSilence/actions/workflows/build-apk.yml/badge.svg)](https://github.com/oeljulio/GeoSilence/actions/workflows/build-apk.yml)
-[![Version](https://img.shields.io/badge/version-v1.1.2-blue.svg)](https://github.com/oeljulio/GeoSilence/releases)
+[![Version](https://img.shields.io/badge/version-v1.1.3-blue.svg)](https://github.com/oeljulio/GeoSilence/releases)
 
 **GeoSilence** es una aplicación nativa para Android diseñada para silenciar o descartar automáticamente las notificaciones de aplicaciones seleccionadas (como WhatsApp, Slack, redes sociales o correo) cuando te encuentras en un área geográfica determinada (como tu oficina, escuela, universidad o casa).
 
@@ -53,6 +53,7 @@ miapp/
 ├── app/
 │   ├── src/main/
 │   │   ├── AndroidManifest.xml        # Declaración de permisos, actividades y servicios
+│   │   ├── assets/leaflet/            # Recursos locales de Leaflet 1.9.4 (JS y CSS)
 │   │   ├── java/com/personal/geosilence/
 │   │   │   ├── MainActivity.kt        # Actividad principal y orquestación de permisos
 │   │   │   ├── data/
