@@ -1,3 +1,21 @@
+## 🛠️ GeoSilence v1.1.5 - Diagnóstico Temporal del WebView del Mapa
+
+Esta versión (**v1.1.5**) añade instrumentación de depuración en `InteractiveMapView.kt` para investigar el problema del mapa en blanco en la pestaña Ubicación, manteniendo la incrustación directa de Leaflet 1.9.4 desde assets.
+
+---
+
+### 🔧 Cambios Técnicos
+
+* **🐛 Diagnóstico Temporal del WebView del Mapa:**
+  * Estado `debugInfo` visible en la barra informativa bajo el mapa.
+  * `WebView.setWebContentsDebuggingEnabled(true)` y color de fondo `#F1F3F4` para inspección remota.
+  * Captura de errores de JavaScript (`WebChromeClient.onConsoleMessage`) con prefijo `JS-ERR`.
+  * Registro de errores de carga de página principal (`WebViewClient.onReceivedError`) con prefijo `ERR-PAGINA`.
+  * Detección de colapso del renderizador (`WebViewClient.onRenderProcessGone`) con prefijo `RENDERER-CAIDO`.
+  * Script de diagnóstico en `onPageFinished` que reporta: `typeof L`, className de `#map`, dimensiones del contenedor y ventana, texto de `#mapError` y versión de Chrome; ejecutado al cargar y repetido a los 2 segundos.
+
+---
+
 ## 🛠️ GeoSilence v1.1.4 - Incrustación Directa de Leaflet y Panel de Diagnóstico en Mapa
 
 Esta versión (**v1.1.4**) corrige de forma definitiva la visualización del mapa en blanco en la pestaña Ubicación al incrustar el código fuente de Leaflet 1.9.4 directamente en el HTML desde los assets locales, independizar el ciclo de renderizado de `window.onload` y habilitar un panel visual de diagnóstico de errores en pantalla.

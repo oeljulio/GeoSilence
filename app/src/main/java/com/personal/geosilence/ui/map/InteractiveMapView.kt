@@ -1,6 +1,7 @@
 package com.personal.geosilence.ui.map
 
 import android.annotation.SuppressLint
+import android.graphics.Color
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -8,7 +9,9 @@ import android.view.MotionEvent
 import android.view.ViewConfiguration
 import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
+import android.webkit.RenderProcessGoneDetail
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
@@ -43,6 +46,7 @@ fun InteractiveMapView(
 ) {
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
     var isMapLoaded by remember { mutableStateOf(false) }
+    var debugInfo by remember { mutableStateOf("WebView: iniciando...") }
 
     // Actualización dinámica del radio sobre el mapa en tiempo real
     LaunchedEffect(radiusMeters) {
@@ -76,6 +80,8 @@ fun InteractiveMapView(
                 AndroidView(
                     factory = { ctx ->
                         WebView(ctx).apply {
+                            WebView.setWebContentsDebuggingEnabled(true)
+                            setBackgroundColor(Color.parseColor("#F1F3F4"))
                             settings.javaScriptEnabled = true
                             settings.domStorageEnabled = true
                             settings.setSupportZoom(true)
@@ -101,6 +107,9 @@ fun InteractiveMapView(
                             webChromeClient = object : WebChromeClient() {
                                 override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
                                     Log.d("GeoMap", consoleMessage?.message() ?: "")
+                                    if (consoleMessage?.messageLevel() == ConsoleMessage.MessageLevel.ERROR) {
+                                        debugInfo += " | JS-ERR: " + consoleMessage.message()
+                                    }
                                     return true
                                 }
                             }
@@ -132,10 +141,59 @@ fun InteractiveMapView(
                                     return null
                                 }
 
+                                override fun onReceivedError(
+                                    view: WebView?,
+                                    request: WebResourceRequest?,
+                                    error: WebResourceError?
+                                ) {
+                                    super.onReceivedError(view, request, error)
+                                    if (request?.isForMainFrame == true) {
+                                        debugInfo += " | ERR-PAGINA: " + error?.description
+                                    }
+                                }
+
+                                override fun onRenderProcessGone(
+                                    view: WebView?,
+                                    detail: RenderProcessGoneDetail?
+                                ): Boolean {
+                                    debugInfo += " | RENDERER-CAIDO crash=" + detail?.didCrash()
+                                    return true
+                                }
+
                                 override fun onPageFinished(view: WebView?, url: String?) {
                                     super.onPageFinished(view, url)
                                     isMapLoaded = true
                                     view?.evaluateJavascript("if (window.map) { window.map.invalidateSize(); }", null)
+
+                                    val debugScript = """
+                                        (function() {
+                                            var mapEl = document.getElementById('map');
+                                            var errorEl = document.getElementById('mapError');
+                                            var ua = navigator.userAgent;
+                                            var chromeMatch = ua.match(/Chrome\\/[0-9.]+/);
+                                            var chromeVer = chromeMatch ? chromeMatch[0] : 'desconocido';
+                                            var mapClass = mapEl ? (mapEl.className || '').substring(0, 18) : 'null';
+                                            var mapW = mapEl ? mapEl.offsetWidth : 0;
+                                            var mapH = mapEl ? mapEl.offsetHeight : 0;
+                                            var errText = errorEl ? errorEl.innerText.substring(0, 120) : 'null';
+                                            return 'typeof L=' + (typeof L) +
+                                                   ' | #map.class=' + mapClass +
+                                                   ' | #map.size=' + mapW + 'x' + mapH +
+                                                   ' | win=' + window.innerWidth + 'x' + window.innerHeight +
+                                                   ' | #mapError=' + errText +
+                                                   ' | UA=' + chromeVer;
+                                        })()
+                                    """.trimIndent()
+
+                                    view?.evaluateJavascript(debugScript) { result ->
+                                        debugInfo = "WebView: " + (result ?: "sin respuesta")
+                                    }
+
+                                    Handler(Looper.getMainLooper()).postDelayed({
+                                        view?.evaluateJavascript(debugScript) { result ->
+                                            debugInfo = "WebView(2s): " + (result ?: "sin respuesta")
+                                        }
+                                    }, 2000)
                                 }
                             }
 
@@ -204,7 +262,7 @@ fun InteractiveMapView(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "Toca el mapa o arrastra el pin rojo para centrar la zona",
+                        text = "Toca el mapa o arrastra el pin rojo para centrar la zona\n[DEBUG] $debugInfo",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 12.sp

@@ -4,6 +4,13 @@ Todos los cambios notables en este proyecto se documentan en este archivo, sigui
 
 ---
 
+## [1.1.5] - 2026-11-07
+
+### 🔧 Cambios Técnicos
+* **🐛 Diagnóstico Temporal del WebView del Mapa:** Añadidos logs de depuración en `InteractiveMapView.kt` (`debugInfo`, `WebView.setWebContentsDebuggingEnabled`, captura de errores JS, `onReceivedError`, `onRenderProcessGone`, script de diagnóstico en `onPageFinished`) para investigar mapa en blanco en la pestaña Ubicación.
+
+---
+
 ## [1.1.4] - 2026-11-07
 
 ### 🐛 Correcciones y Mejoras
