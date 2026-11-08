@@ -34,7 +34,7 @@
 |---|---|
 | Android mínimo | 8.0 Oreo (`minSdk 26`) |
 | Android de compilación | API 35 (`compileSdk 35`, `targetSdk 35`) |
-| Lenguaje | Kotlin 2.0.20 (JVM target 17) |
+| Lenguaje | Kotlin 2.0.21 (JVM target 17) |
 | JDK para compilar | 17 |
 
 ---

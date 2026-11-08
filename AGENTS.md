@@ -8,7 +8,7 @@ GeoSilence es una app nativa de Android que silencia y descarta las notificacion
 
 | Componente | Versión |
 |---|---|
-| Kotlin | 2.0.20 (JVM target 17) |
+| Kotlin | 2.0.21 (JVM target 17) |
 | Android Gradle Plugin | 8.5.2 |
 | Gradle Wrapper | 8.7 |
 | compileSdk / targetSdk | 35 |
