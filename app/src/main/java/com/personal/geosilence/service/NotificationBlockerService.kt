@@ -41,8 +41,8 @@ class NotificationBlockerService : NotificationListenerService() {
             return
         }
 
-        // Verificar si estamos actualmente en la zona restringida
-        if (!prefs.isInsideZone) {
+        // Verificar si el modo configurado (bloquear dentro o fuera) se cumple ahora
+        if (!prefs.shouldBlockNow()) {
             return
         }
 

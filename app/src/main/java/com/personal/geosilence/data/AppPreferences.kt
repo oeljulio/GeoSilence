@@ -72,6 +72,11 @@ class AppPreferences(context: Context) {
         return getBlockedPackages().contains(packageName)
     }
 
+    fun shouldBlockNow(): Boolean {
+        val blockInside = getZones().firstOrNull()?.blockInside ?: true
+        return isInsideZone == blockInside
+    }
+
     fun getZones(): List<GeofenceZone> {
         val json = prefs.getString(KEY_ZONES_JSON, null) ?: return emptyList()
         return try {

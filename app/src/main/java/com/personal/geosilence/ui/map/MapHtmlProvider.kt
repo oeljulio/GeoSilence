@@ -233,9 +233,12 @@ object MapHtmlProvider {
 
       // Crear el mapa antes de cualquier ajuste de tamaño o invalidateSize
       map = L.map('map', {
-        zoomControl: true,
+        zoomControl: false,
         attributionControl: true
       }).setView([currentLat, currentLng], 15);
+
+      // Control de zoom arriba a la derecha para no tapar el badge del radio
+      L.control.zoom({ position: 'topright' }).addTo(map);
 
       // Forzar altura una vez que el contenedor ya existe
       forceMapSize();
@@ -301,6 +304,9 @@ object MapHtmlProvider {
           window.AndroidBridge.onLocationSelected(pos.lat, pos.lng);
         }
       });
+
+      // Encuadre inicial del círculo una vez que el contenedor tiene tamaño definitivo
+      setTimeout(window.fitCircle, 450);
     }
 
     function setMarkerAndCircle(lat, lng) {
@@ -324,8 +330,19 @@ object MapHtmlProvider {
       currentLat = lat;
       currentLng = lng;
       setMarkerAndCircle(lat, lng);
-      if (pan && map) {
+      // Solo desplaza la vista si el punto queda fuera del área visible (con margen)
+      if (pan && map && !map.getBounds().pad(-0.25).contains(L.latLng(lat, lng))) {
         map.panTo([lat, lng], { animate: true, duration: 0.5 });
+      }
+    };
+
+    // Encuadra el círculo de la zona dentro del área visible del mapa
+    window.fitCircle = function() {
+      if (!map || !circle) return;
+      try {
+        map.fitBounds(circle.getBounds(), { maxZoom: 17, padding: [30, 30], animate: true });
+      } catch (e) {
+        showMapError('fitCircle: ' + e);
       }
     };
 

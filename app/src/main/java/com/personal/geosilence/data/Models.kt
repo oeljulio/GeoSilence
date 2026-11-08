@@ -8,7 +8,8 @@ data class GeofenceZone(
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
     val radiusMeters: Float = 200f,
-    val isEnabled: Boolean = true
+    val isEnabled: Boolean = true,
+    val blockInside: Boolean = true
 )
 
 data class InstalledAppInfo(

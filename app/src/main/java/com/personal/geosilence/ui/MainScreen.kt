@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,6 +25,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -32,15 +34,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.graphics.drawable.toBitmap
-import com.google.android.gms.location.LocationServices
 import com.personal.geosilence.data.AppPreferences
 import com.personal.geosilence.data.GeofenceZone
 import com.personal.geosilence.data.InstalledAppInfo
 import com.personal.geosilence.location.GeofenceManager
-import com.personal.geosilence.ui.map.InteractiveMapView
+import com.personal.geosilence.location.LocationHelper
+import com.personal.geosilence.ui.theme.StatusGray
 import com.personal.geosilence.ui.theme.StatusGreen
 import com.personal.geosilence.ui.theme.StatusRed
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
@@ -61,13 +64,26 @@ fun MainScreen(
     var isInsideZone by remember { mutableStateOf(prefs.isInsideZone) }
     var blockedCount by remember { mutableStateOf(prefs.blockedCount) }
 
-    // Geofence Zone state
-    val zones = remember { prefs.getZones() }
-    val currentZone = zones.firstOrNull() ?: GeofenceZone(name = "Zona Principal", radiusMeters = 200f)
-    var zoneName by remember { mutableStateOf(currentZone.name) }
-    var latitudeText by remember { mutableStateOf(if (currentZone.latitude != 0.0) currentZone.latitude.toString() else "") }
-    var longitudeText by remember { mutableStateOf(if (currentZone.longitude != 0.0) currentZone.longitude.toString() else "") }
-    var radiusMeters by remember { mutableFloatStateOf(currentZone.radiusMeters) }
+    // Zona guardada y borrador editable
+    var savedZone by remember {
+        mutableStateOf(prefs.getZones().firstOrNull() ?: GeofenceZone(name = "Zona Principal", radiusMeters = 200f))
+    }
+    var zoneName by remember { mutableStateOf(savedZone.name) }
+    var draftLatitude by remember { mutableDoubleStateOf(savedZone.latitude) }
+    var draftLongitude by remember { mutableDoubleStateOf(savedZone.longitude) }
+    var radiusMeters by remember { mutableFloatStateOf(savedZone.radiusMeters) }
+    var blockInside by remember { mutableStateOf(savedZone.blockInside) }
+
+    val hasChosenLocation = draftLatitude != 0.0 && draftLongitude != 0.0
+    val hasChanges = hasChosenLocation && (
+        zoneName != savedZone.name ||
+        draftLatitude != savedZone.latitude ||
+        draftLongitude != savedZone.longitude ||
+        radiusMeters != savedZone.radiusMeters ||
+        blockInside != savedZone.blockInside
+        )
+
+    var showMapPicker by remember { mutableStateOf(false) }
 
     // Apps state
     var searchQuery by remember { mutableStateOf("") }
@@ -108,206 +124,257 @@ fun MainScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.NotificationsOff,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(end = 8.dp)
+    // Refresca el estado visible mientras la app está abierta (permisos, zona y contador)
+    LaunchedEffect(Unit) {
+        while (true) {
+            hasNotificationAccess = NotificationManagerCompat
+                .getEnabledListenerPackages(context)
+                .contains(context.packageName)
+            isInsideZone = prefs.isInsideZone
+            blockedCount = prefs.blockedCount
+            delay(1000)
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.NotificationsOff,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(end = 8.dp)
+                            )
+                            Text("GeoSilence", fontWeight = FontWeight.Bold)
+                        }
+                    },
+                    actions = {
+                        Switch(
+                            checked = isMasterEnabled,
+                            onCheckedChange = { enabled ->
+                                isMasterEnabled = enabled
+                                prefs.isMasterEnabled = enabled
+                                if (enabled) {
+                                    geofenceManager.registerGeofences(prefs.getZones())
+                                } else {
+                                    geofenceManager.removeGeofences()
+                                }
+                            },
+                            modifier = Modifier.padding(end = 12.dp)
                         )
-                        Text("GeoSilence", fontWeight = FontWeight.Bold)
                     }
-                },
-                actions = {
-                    Switch(
-                        checked = isMasterEnabled,
-                        onCheckedChange = { enabled ->
-                            isMasterEnabled = enabled
-                            prefs.isMasterEnabled = enabled
-                            if (enabled) {
-                                geofenceManager.registerGeofences(prefs.getZones())
-                            } else {
-                                geofenceManager.removeGeofences()
-                            }
+                )
+            }
+        ) { padding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+            ) {
+                // Permission Banners if required
+                if (!hasNotificationAccess) {
+                    PermissionWarningCard(
+                        title = "Permiso de Acceso a Notificaciones",
+                        description = "Es indispensable para interceptar y descartar notificaciones. " +
+                            "Si Android dice «Se ha denegado el acceso» (ajustes restringidos): " +
+                            "Info. de la app → menú ⋮ → Permitir ajustes restringidos, y vuelve a intentarlo.",
+                        buttonText = "Activar en Ajustes",
+                        onClick = {
+                            val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                            context.startActivity(intent)
                         },
-                        modifier = Modifier.padding(end = 12.dp)
+                        secondaryButtonText = "Info. de la app",
+                        onSecondaryClick = {
+                            try {
+                                val intent = Intent(
+                                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                    Uri.parse("package:${context.packageName}")
+                                )
+                                context.startActivity(intent)
+                            } catch (e: Exception) {
+                                // Algunos fabricantes no exponen la pantalla de info de la app
+                            }
+                        }
                     )
                 }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            // Permission Banners if required
-            if (!hasNotificationAccess) {
-                PermissionWarningCard(
-                    title = "Permiso de Acceso a Notificaciones",
-                    description = "Es indispensable para interceptar y descartar notificaciones.",
-                    buttonText = "Activar en Ajustes",
-                    onClick = {
-                        val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
-                        context.startActivity(intent)
+
+                if (!hasLocationPermission) {
+                    PermissionWarningCard(
+                        title = "Permiso de Ubicación en 2do Plano",
+                        description = "Necesario para detectar cuando entras o sales de la zona geográfica.",
+                        buttonText = "Conceder Permisos",
+                        onClick = onRequestLocationPermission
+                    )
+                }
+
+                // Real-time Status Card
+                StatusCard(
+                    isMasterEnabled = isMasterEnabled,
+                    isInsideZone = isInsideZone,
+                    blockInside = savedZone.blockInside,
+                    blockedCount = blockedCount,
+                    onToggleSimulation = {
+                        // Botón para probar manualmente el estado sin moverse
+                        val newState = !isInsideZone
+                        isInsideZone = newState
+                        prefs.isInsideZone = newState
                     }
                 )
-            }
 
-            if (!hasLocationPermission) {
-                PermissionWarningCard(
-                    title = "Permiso de Ubicación en 2do Plano",
-                    description = "Necesario para detectar cuando entras o sales de la zona geográfica.",
-                    buttonText = "Conceder Permisos",
-                    onClick = onRequestLocationPermission
-                )
-            }
-
-            // Real-time Status Card
-            StatusCard(
-                isMasterEnabled = isMasterEnabled,
-                isInsideZone = isInsideZone,
-                blockedCount = blockedCount,
-                onToggleSimulation = {
-                    // Botón para probar manualmente el estado sin moverse
-                    val newState = !isInsideZone
-                    isInsideZone = newState
-                    prefs.isInsideZone = newState
+                // Tabs for navigation: Zonas, Apps a Bloquear, Historial, Ajustes
+                ScrollableTabRow(
+                    selectedTabIndex = selectedTab,
+                    edgePadding = 12.dp,
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.primary,
+                    divider = { HorizontalDivider() }
+                ) {
+                    Tab(
+                        selected = selectedTab == 0,
+                        onClick = { selectedTab = 0 },
+                        text = {
+                            Text(
+                                text = "Ubicación",
+                                maxLines = 1,
+                                overflow = TextOverflow.Clip,
+                                softWrap = false
+                            )
+                        },
+                        icon = { Icon(Icons.Default.LocationOn, contentDescription = null) }
+                    )
+                    Tab(
+                        selected = selectedTab == 1,
+                        onClick = { selectedTab = 1 },
+                        text = {
+                            Text(
+                                text = "Apps (${prefs.getBlockedPackages().size})",
+                                maxLines = 1,
+                                overflow = TextOverflow.Clip,
+                                softWrap = false
+                            )
+                        },
+                        icon = { Icon(Icons.Default.Apps, contentDescription = null) }
+                    )
+                    Tab(
+                        selected = selectedTab == 2,
+                        onClick = { selectedTab = 2 },
+                        text = {
+                            Text(
+                                text = "Historial",
+                                maxLines = 1,
+                                overflow = TextOverflow.Clip,
+                                softWrap = false
+                            )
+                        },
+                        icon = { Icon(Icons.Default.History, contentDescription = null) }
+                    )
+                    Tab(
+                        selected = selectedTab == 3,
+                        onClick = { selectedTab = 3 },
+                        text = {
+                            Text(
+                                text = "Ajustes",
+                                maxLines = 1,
+                                overflow = TextOverflow.Clip,
+                                softWrap = false
+                            )
+                        },
+                        icon = { Icon(Icons.Default.Settings, contentDescription = null) }
+                    )
                 }
-            )
 
-            // Tabs for navigation: Zonas, Apps a Bloquear, Historial, Ajustes
-            ScrollableTabRow(
-                selectedTabIndex = selectedTab,
-                edgePadding = 12.dp,
-                containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.primary,
-                divider = { HorizontalDivider() }
-            ) {
-                Tab(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    text = {
-                        Text(
-                            text = "Ubicación",
-                            maxLines = 1,
-                            overflow = TextOverflow.Clip,
-                            softWrap = false
-                        )
-                    },
-                    icon = { Icon(Icons.Default.LocationOn, contentDescription = null) }
-                )
-                Tab(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    text = {
-                        Text(
-                            text = "Apps (${prefs.getBlockedPackages().size})",
-                            maxLines = 1,
-                            overflow = TextOverflow.Clip,
-                            softWrap = false
-                        )
-                    },
-                    icon = { Icon(Icons.Default.Apps, contentDescription = null) }
-                )
-                Tab(
-                    selected = selectedTab == 2,
-                    onClick = { selectedTab = 2 },
-                    text = {
-                        Text(
-                            text = "Historial",
-                            maxLines = 1,
-                            overflow = TextOverflow.Clip,
-                            softWrap = false
-                        )
-                    },
-                    icon = { Icon(Icons.Default.History, contentDescription = null) }
-                )
-                Tab(
-                    selected = selectedTab == 3,
-                    onClick = { selectedTab = 3 },
-                    text = {
-                        Text(
-                            text = "Ajustes",
-                            maxLines = 1,
-                            overflow = TextOverflow.Clip,
-                            softWrap = false
-                        )
-                    },
-                    icon = { Icon(Icons.Default.Settings, contentDescription = null) }
-                )
-            }
-
-            when (selectedTab) {
-                0 -> LocationConfigScreen(
-                    zoneName = zoneName,
-                    latitude = latitudeText,
-                    longitude = longitudeText,
-                    radius = radiusMeters,
-                    onZoneNameChange = { zoneName = it },
-                    onLatitudeChange = { latitudeText = it },
-                    onLongitudeChange = { longitudeText = it },
-                    onRadiusChange = { radiusMeters = it },
-                    onGetCurrentLocation = {
-                        try {
-                            val fusedClient = LocationServices.getFusedLocationProviderClient(context)
-                            fusedClient.lastLocation.addOnSuccessListener { loc ->
-                                if (loc != null) {
-                                    latitudeText = loc.latitude.toString()
-                                    longitudeText = loc.longitude.toString()
+                when (selectedTab) {
+                    0 -> LocationConfigScreen(
+                        zoneName = zoneName,
+                        latitude = draftLatitude,
+                        longitude = draftLongitude,
+                        radius = radiusMeters,
+                        blockInside = blockInside,
+                        hasChosenLocation = hasChosenLocation,
+                        hasChanges = hasChanges,
+                        hasSavedZone = savedZone.latitude != 0.0 && savedZone.longitude != 0.0,
+                        onZoneNameChange = { zoneName = it },
+                        onBlockInsideChange = { blockInside = it },
+                        onOpenMapPicker = { showMapPicker = true },
+                        onSaveZone = {
+                            val newZone = savedZone.copy(
+                                name = zoneName.ifBlank { "Mi Zona" },
+                                latitude = draftLatitude,
+                                longitude = draftLongitude,
+                                radiusMeters = radiusMeters,
+                                isEnabled = true,
+                                blockInside = blockInside
+                            )
+                            prefs.saveZones(listOf(newZone))
+                            savedZone = newZone
+                            zoneName = newZone.name
+                            if (isMasterEnabled) {
+                                geofenceManager.registerGeofences(listOf(newZone))
+                            }
+                            // Sincronizar el estado dentro/fuera para que el modo elegido
+                            // se aplique de inmediato, sin esperar a una transición real
+                            scope.launch {
+                                val location = LocationHelper.getCurrentLocation(context)
+                                if (location != null) {
+                                    prefs.isInsideZone = GeofenceManager.isLocationInsideZone(
+                                        location.latitude,
+                                        location.longitude,
+                                        newZone
+                                    )
+                                    isInsideZone = prefs.isInsideZone
                                 }
                             }
-                        } catch (e: SecurityException) {
-                            onRequestLocationPermission()
                         }
-                    },
-                    onSaveZone = {
-                        val lat = latitudeText.toDoubleOrNull() ?: 0.0
-                        val lng = longitudeText.toDoubleOrNull() ?: 0.0
-                        val newZone = GeofenceZone(
-                            id = currentZone.id,
-                            name = zoneName.ifBlank { "Mi Zona" },
-                            latitude = lat,
-                            longitude = lng,
-                            radiusMeters = radiusMeters,
-                            isEnabled = true
-                        )
-                        prefs.saveZones(listOf(newZone))
-                        geofenceManager.registerGeofences(listOf(newZone))
-                    }
-                )
+                    )
 
-                1 -> AppsListScreen(
-                    installedApps = installedApps,
-                    searchQuery = searchQuery,
-                    isLoading = isLoadingApps,
-                    onSearchQueryChange = { searchQuery = it },
-                    onToggleApp = { packageName, isBlocked ->
-                        prefs.setPackageBlocked(packageName, isBlocked)
-                        installedApps = installedApps.map {
-                            if (it.packageName == packageName) it.copy(isBlocked = isBlocked) else it
+                    1 -> AppsListScreen(
+                        installedApps = installedApps,
+                        searchQuery = searchQuery,
+                        isLoading = isLoadingApps,
+                        onSearchQueryChange = { searchQuery = it },
+                        onToggleApp = { packageName, isBlocked ->
+                            prefs.setPackageBlocked(packageName, isBlocked)
+                            installedApps = installedApps.map {
+                                if (it.packageName == packageName) it.copy(isBlocked = isBlocked) else it
+                            }
                         }
-                    }
-                )
+                    )
 
-                2 -> HistoryScreen(
-                    prefs = prefs,
-                    onClear = {
-                        prefs.clearLogs()
-                        blockedCount = 0
-                    },
-                    onNavigateToSettings = { selectedTab = 3 }
-                )
+                    2 -> HistoryScreen(
+                        prefs = prefs,
+                        onClear = {
+                            prefs.clearLogs()
+                            blockedCount = 0
+                        },
+                        onNavigateToSettings = { selectedTab = 3 }
+                    )
 
-                3 -> SettingsScreen(
-                    prefs = prefs,
-                    onNavigateToHistory = { selectedTab = 2 }
-                )
+                    3 -> SettingsScreen(
+                        prefs = prefs,
+                        onNavigateToHistory = { selectedTab = 2 }
+                    )
+                }
             }
+        }
+
+        if (showMapPicker) {
+            BackHandler { showMapPicker = false }
+            MapPickerScreen(
+                initialLatitude = draftLatitude,
+                initialLongitude = draftLongitude,
+                initialRadiusMeters = radiusMeters,
+                onConfirm = { lat, lng, radius ->
+                    draftLatitude = lat
+                    draftLongitude = lng
+                    radiusMeters = radius
+                    showMapPicker = false
+                },
+                onDismiss = { showMapPicker = false },
+                onRequestLocationPermission = onRequestLocationPermission
+            )
         }
     }
 }
@@ -316,16 +383,18 @@ fun MainScreen(
 fun StatusCard(
     isMasterEnabled: Boolean,
     isInsideZone: Boolean,
+    blockInside: Boolean = true,
     blockedCount: Int,
     onToggleSimulation: () -> Unit
 ) {
+    val isBlocking = isMasterEnabled && (isInsideZone == blockInside)
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (!isMasterEnabled) MaterialTheme.colorScheme.surfaceVariant
-            else if (isInsideZone) StatusGreen.copy(alpha = 0.15f)
+            else if (isBlocking) StatusGreen.copy(alpha = 0.15f)
             else MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f)
         )
     ) {
@@ -342,20 +411,30 @@ fun StatusCard(
                             .clip(CircleShape)
                             .background(
                                 if (!isMasterEnabled) StatusRed
-                                else if (isInsideZone) StatusGreen
-                                else MaterialTheme.colorScheme.outline
+                                else if (isBlocking) StatusGreen
+                                else StatusGray
                             )
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = if (!isMasterEnabled) "Bloqueo Desactivado"
-                        else if (isInsideZone) "DENTRO DE LA ZONA (Bloqueando)"
-                        else "FUERA DE LA ZONA (Permitiendo)",
+                        text = when {
+                            !isMasterEnabled -> "Bloqueo desactivado"
+                            isBlocking -> "BLOQUEANDO notificaciones"
+                            else -> "PERMITIENDO notificaciones"
+                        },
                         fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp
+                        fontSize = 15.sp,
+                        color = if (!isMasterEnabled) MaterialTheme.colorScheme.error else Color.Unspecified
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = if (isInsideZone) "Estás dentro de la zona" else "Estás fuera de la zona",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
 
             Spacer(modifier = Modifier.height(10.dp))
             Text(
@@ -386,7 +465,9 @@ fun PermissionWarningCard(
     title: String,
     description: String,
     buttonText: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    secondaryButtonText: String? = null,
+    onSecondaryClick: (() -> Unit)? = null
 ) {
     Card(
         modifier = Modifier
@@ -398,11 +479,23 @@ fun PermissionWarningCard(
             Text(title, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onErrorContainer)
             Text(description, fontSize = 13.sp, color = MaterialTheme.colorScheme.onErrorContainer)
             Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = onClick,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-            ) {
-                Text(buttonText)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(
+                    onClick = onClick,
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text(buttonText)
+                }
+                if (secondaryButtonText != null && onSecondaryClick != null) {
+                    OutlinedButton(
+                        onClick = onSecondaryClick,
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    ) {
+                        Text(secondaryButtonText)
+                    }
+                }
             }
         }
     }
@@ -411,22 +504,19 @@ fun PermissionWarningCard(
 @Composable
 fun LocationConfigScreen(
     zoneName: String,
-    latitude: String,
-    longitude: String,
+    latitude: Double,
+    longitude: Double,
     radius: Float,
+    blockInside: Boolean,
+    hasChosenLocation: Boolean,
+    hasChanges: Boolean,
+    hasSavedZone: Boolean,
     onZoneNameChange: (String) -> Unit,
-    onLatitudeChange: (String) -> Unit,
-    onLongitudeChange: (String) -> Unit,
-    onRadiusChange: (Float) -> Unit,
-    onGetCurrentLocation: () -> Unit,
+    onBlockInsideChange: (Boolean) -> Unit,
+    onOpenMapPicker: () -> Unit,
     onSaveZone: () -> Unit
 ) {
-    var saveSuccessMessage by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
-
-    val latDouble = latitude.toDoubleOrNull() ?: 0.0
-    val lngDouble = longitude.toDoubleOrNull() ?: 0.0
-    val presetRadii = listOf(100f, 250f, 500f, 1000f, 2000f)
 
     Column(
         modifier = Modifier
@@ -447,137 +537,156 @@ fun LocationConfigScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Vista interactiva del mapa con OpenStreetMap y Leaflet
-        InteractiveMapView(
-            latitude = latDouble,
-            longitude = lngDouble,
-            radiusMeters = radius,
-            onLocationSelected = { newLat, newLng ->
-                onLatitudeChange(String.format(Locale.US, "%.6f", newLat))
-                onLongitudeChange(String.format(Locale.US, "%.6f", newLng))
-            }
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Control de Radio Interactivo
+        // Resumen de la zona elegida en el selector a pantalla completa
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+            )
         ) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Radio de Silencio:",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Surface(
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                if (hasChosenLocation) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = if (radius >= 1000f) {
-                                String.format(Locale.getDefault(), "%.1f km", radius / 1000f)
-                            } else {
-                                "${radius.toInt()} m"
-                            },
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            text = "Zona seleccionada",
+                            fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.titleSmall
                         )
                     }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Lat: ${String.format(Locale.US, "%.5f", latitude)} · " +
+                            "Lng: ${String.format(Locale.US, "%.5f", longitude)}",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = "Radio: ${formatRadiusDefault(radius)}",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                } else {
+                    Text(
+                        text = "Aún no has elegido la ubicación",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
 
-                Spacer(modifier = Modifier.height(6.dp))
-
-                Slider(
-                    value = radius,
-                    onValueChange = onRadiusChange,
-                    valueRange = 50f..3000f,
-                    steps = 58
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                Spacer(modifier = Modifier.height(10.dp))
+                Button(
+                    onClick = onOpenMapPicker,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    presetRadii.forEach { preset ->
-                        val label = if (preset >= 1000f) "${(preset / 1000).toInt()} km" else "${preset.toInt()} m"
-                        val isSelected = Math.abs(radius - preset) < 25f
-
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = { onRadiusChange(preset) },
-                            label = { Text(label, fontSize = 11.sp) }
-                        )
-                    }
+                    Icon(Icons.Default.Map, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(if (hasChosenLocation) "Cambiar en el mapa" else "Elegir en el mapa")
                 }
             }
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(
-                value = latitude,
-                onValueChange = onLatitudeChange,
-                label = { Text("Latitud") },
-                modifier = Modifier.weight(1f),
-                singleLine = true
-            )
-            OutlinedTextField(
-                value = longitude,
-                onValueChange = onLongitudeChange,
-                label = { Text("Longitud") },
-                modifier = Modifier.weight(1f),
-                singleLine = true
-            )
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        Button(
-            onClick = onGetCurrentLocation,
+        // Comportamiento: bloquear dentro de la zona o fuera de ella
+        Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.outlinedButtonColors()
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+            )
         ) {
-            Icon(Icons.Default.MyLocation, contentDescription = null)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Usar mi ubicación GPS actual")
+            Column(modifier = Modifier.padding(14.dp)) {
+                Text(
+                    text = "Comportamiento",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onBlockInsideChange(true) },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = blockInside,
+                        onCheckedChange = { checked -> onBlockInsideChange(checked) }
+                    )
+                    Text("Bloquear dentro de la zona", fontSize = 14.sp)
+                }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onBlockInsideChange(false) },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = !blockInside,
+                        onCheckedChange = { checked -> onBlockInsideChange(!checked) }
+                    )
+                    Text("Bloquear fuera de la zona", fontSize = 14.sp)
+                }
+
+                Text(
+                    text = if (blockInside) "Dentro: bloquea · Fuera: permite"
+                    else "Dentro: permite · Fuera: bloquea",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = {
-                onSaveZone()
-                saveSuccessMessage = true
-            },
-            modifier = Modifier.fillMaxWidth()
+            onClick = onSaveZone,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = hasChosenLocation
         ) {
             Icon(Icons.Default.Save, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
             Text("Guardar y Activar Zona")
         }
 
-        if (saveSuccessMessage) {
-            Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(8.dp))
+        if (!hasChosenLocation) {
             Text(
-                "¡Zona guardada y geofence activada correctamente!",
+                "Elige la ubicación en el mapa para poder guardar.",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 13.sp
+            )
+        } else if (hasSavedZone && !hasChanges) {
+            Text(
+                "✓ Zona guardada y geofence activo",
                 color = StatusGreen,
                 fontWeight = FontWeight.Bold,
+                fontSize = 13.sp
+            )
+        } else {
+            Text(
+                "Hay cambios sin guardar",
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.SemiBold,
                 fontSize = 13.sp
             )
         }
     }
 }
+
+private fun formatRadiusDefault(meters: Float): String =
+    if (meters >= 1000f) {
+        String.format(Locale.getDefault(), "%.1f km", meters / 1000f)
+    } else {
+        "${meters.toInt()} m"
+    }
 
 @Composable
 fun AppsListScreen(
