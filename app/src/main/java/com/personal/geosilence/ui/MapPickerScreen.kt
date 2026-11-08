@@ -149,7 +149,7 @@ fun MapPickerScreen(
 
 @Composable
 private fun RadiusPanel(radius: Float, onRadiusChange: (Float) -> Unit) {
-    val presets = listOf(100f, 250f, 500f, 1000f, 2000f)
+    val presets = listOf(100f, 250f, 500f, 1000f)
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
