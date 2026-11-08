@@ -6,12 +6,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.MotionEvent
-import android.view.ViewConfiguration
-import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
-import android.webkit.RenderProcessGoneDetail
-import android.webkit.WebChromeClient
-import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
@@ -46,7 +41,6 @@ fun InteractiveMapView(
 ) {
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
     var isMapLoaded by remember { mutableStateOf(false) }
-    var debugInfo by remember { mutableStateOf("WebView: iniciando...") }
 
     // Actualización dinámica del radio sobre el mapa en tiempo real
     LaunchedEffect(radiusMeters) {
@@ -80,7 +74,6 @@ fun InteractiveMapView(
                 AndroidView(
                     factory = { ctx ->
                         WebView(ctx).apply {
-                            WebView.setWebContentsDebuggingEnabled(true)
                             setBackgroundColor(Color.parseColor("#F1F3F4"))
                             settings.javaScriptEnabled = true
                             settings.domStorageEnabled = true
@@ -102,16 +95,6 @@ fun InteractiveMapView(
                                     }
                                 }
                                 false
-                            }
-
-                            webChromeClient = object : WebChromeClient() {
-                                override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
-                                    Log.d("GeoMap", consoleMessage?.message() ?: "")
-                                    if (consoleMessage?.messageLevel() == ConsoleMessage.MessageLevel.ERROR) {
-                                        debugInfo += " | JS-ERR: " + consoleMessage.message()
-                                    }
-                                    return true
-                                }
                             }
 
                             webViewClient = object : WebViewClient() {
@@ -141,25 +124,6 @@ fun InteractiveMapView(
                                     return null
                                 }
 
-                                override fun onReceivedError(
-                                    view: WebView?,
-                                    request: WebResourceRequest?,
-                                    error: WebResourceError?
-                                ) {
-                                    super.onReceivedError(view, request, error)
-                                    if (request?.isForMainFrame == true) {
-                                        debugInfo += " | ERR-PAGINA: " + error?.description
-                                    }
-                                }
-
-                                override fun onRenderProcessGone(
-                                    view: WebView?,
-                                    detail: RenderProcessGoneDetail?
-                                ): Boolean {
-                                    debugInfo += " | RENDERER-CAIDO crash=" + detail?.didCrash()
-                                    return true
-                                }
-
                                 override fun onPageFinished(view: WebView?, url: String?) {
                                     super.onPageFinished(view, url)
                                     isMapLoaded = true
@@ -168,97 +132,6 @@ fun InteractiveMapView(
                                         "if (window.forceMapSize) { window.forceMapSize(); }",
                                         null
                                     )
-
-                                    // Script de diagnóstico envuelto en IIFE que siempre devuelve un string
-                                    // Incluye: versión, location.href, readyState, typeof L, estado y estilo computado de #map,
-                                    // atributo style, cadena de padres hasta body, dimensiones, UA/Chrome y #mapError
-                                    val debugScript = """
-                                        (function() {
-                                            try {
-                                                var mapEl = document.getElementById('map');
-                                                var errorEl = document.getElementById('mapError');
-                                                var url = document.location.href;
-                                                var readyState = document.readyState;
-                                                var lType = typeof L;
-                                                var mapExists = mapEl !== null ? 'sí' : 'no';
-                                                var mapClass = mapEl ? (mapEl.className || '').substring(0, 18) : 'null';
-                                                var mapW = mapEl ? mapEl.offsetWidth : 0;
-                                                var mapH = mapEl ? mapEl.offsetHeight : 0;
-                                                var winW = window.innerWidth;
-                                                var winH = window.innerHeight;
-                                                var htmlLen = document.documentElement.outerHTML.length;
-                                                var errText = errorEl ? errorEl.innerText.substring(0, 60) : 'null';
-                                                var ua = navigator.userAgent;
-                                                var chromeMatch = ua.match(/Chrome\/[0-9.]+/);
-                                                var chromeVer = chromeMatch ? chromeMatch[0] : 'desconocido';
-                                                var cs = mapEl && window.getComputedStyle ? window.getComputedStyle(mapEl) : null;
-                                                var csHeight = cs ? cs.height : 'null';
-                                                var csPosition = cs ? cs.position : 'null';
-                                                var csDisplay = cs ? cs.display : 'null';
-                                                var styleAttr = mapEl ? (mapEl.getAttribute('style') || '').substring(0, 40) : 'null';
-                                                var errStack = '';
-                                                var errMsg = errorEl ? (errorEl.innerText || '') : '';
-                                                if (errMsg.length > 0) {
-                                                    var stackMatch = errMsg.match(/JS:[^\n]*/);
-                                                    errStack = stackMatch ? stackMatch[0].substring(0, 150) : errMsg.substring(0, 150);
-                                                }
-                                                var chain = '';
-                                                var node = mapEl ? mapEl.parentElement : null;
-                                                var depth = 0;
-                                                while (node && depth < 8) {
-                                                    chain += (depth === 0 ? '' : ' < ') +
-                                                             (node.tagName || '?') +
-                                                             (node.id ? '#' + node.id : '') +
-                                                             '=' + node.offsetHeight;
-                                                    if (node === document.body) break;
-                                                    node = node.parentElement;
-                                                    depth++;
-                                                }
-                                                return 'v=1.1.9' +
-                                                       ' | loc=' + encodeURIComponent(url) +
-                                                       ' | ready=' + readyState +
-                                                       ' | LType=' + lType +
-                                                       ' | mapExists=' + mapExists +
-                                                       ' | mapClass=' + mapClass +
-                                                       ' | mapSize=' + mapW + 'x' + mapH +
-                                                       ' | win=' + winW + 'x' + winH +
-                                                       ' | csH=' + csHeight +
-                                                       ' | csPos=' + csPosition +
-                                                       ' | csDisp=' + csDisplay +
-                                                       ' | style="' + styleAttr + '"' +
-                                                       ' | parents=' + (chain || 'null') +
-                                                       ' | htmlLen=' + htmlLen +
-                                                       ' | mapError=' + errText +
-                                                       ' | errStack=' + (errStack || 'null') +
-                                                       ' | UA=' + chromeVer;
-                                            } catch (e) {
-                                                return 'v=1.1.9 | EXC: ' + e.message + ' | ' + String(e.stack || '').substring(0, 150);
-                                            }
-                                        })()
-                                    """.trimIndent()
-
-                                    // Acumular en debugInfo sin pisar lectura anterior
-                                    val accumKey = "WebView: "
-                                    view?.evaluateJavascript(debugScript) { result ->
-                                        if (result != null && result != "sin respuesta") {
-                                            debugInfo = accumKey + result + " | " + debugInfo
-                                        }
-                                    }
-
-                                    Handler(Looper.getMainLooper()).postDelayed({
-                                        view?.evaluateJavascript(debugScript) { result ->
-                                            if (result != null && result != "sin respuesta") {
-                                                debugInfo = "WebView(2s): " + result + " | " + debugInfo
-                                            }
-                                        }
-                                    }, 2000)
-                                }
-
-                                override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
-                                    super.onPageStarted(view, url, favicon)
-                                    // Acumular URL de inicio sin pisar lectura anterior
-                                    val urlTruncated = url?.substring(0, Math.min(url.length, 40)) ?: "desconocido"
-                                    debugInfo = "start: " + urlTruncated + " | " + debugInfo
                                 }
                             }
 
@@ -327,7 +200,7 @@ fun InteractiveMapView(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "Toca el mapa o arrastra el pin rojo para centrar la zona\n[DEBUG] $debugInfo",
+                        text = "Toca el mapa o arrastra el pin rojo para centrar la zona",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 12.sp

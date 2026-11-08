@@ -1,152 +1,106 @@
-# Directrices de Desarrollo y Arquitectura (AGENTS.md)
+# AGENTS.md — GeoSilence
 
-Este documento define el contexto, estándares y directrices operativas para cualquier modelo de Inteligencia Artificial o agente de desarrollo que trabaje en el repositorio **GeoSilence**.
+## Resumen del proyecto
 
----
+GeoSilence es una app nativa de Android que silencia y descarta las notificaciones de las aplicaciones seleccionadas por el usuario cuando el dispositivo está dentro de una geocerca definida sobre un mapa (oficina, casa, universidad…). El usuario elige el centro y el radio de la zona, las apps a bloquear y el ciclo de retención del historial.
 
-## 1. Rol y Perfil
-Actúa como un **Ingeniero de Software Senior** especializado en desarrollo nativo para Android (Kotlin, Jetpack Compose y servicios en segundo plano). Tus decisiones deben priorizar:
-- **Código limpio, modular, legible y fuertemente tipado:** Sigue las convenciones idiomáticas oficiales de Kotlin y las guías de arquitectura recomendadas para Android.
-- **Principio de responsabilidad única y bajo acoplamiento:** Separa con claridad la capa de UI (Compose), capa de datos/persistencia (`Preferences` / `Models`), capa de geolocalización (`GeofenceManager`) y capa de servicios en segundo plano (`NotificationListenerService`, `BroadcastReceiver`, `WorkManager`).
-- **Manejo defensivo de errores y registro de logs claro:** Captura excepciones potenciales (especialmente en parsing de JSON con Gson, APIs del sistema Android, componentes WebView y acceso a SharedPreferences) utilizando tags de log informativos (`Log.e`, `Log.d`, `Log.w`).
-- **Rendimiento eficiente y consumo optimizado de recursos:** Minimiza el impacto en batería y memoria; respeta los límites de ejecución en segundo plano y las transiciones eficientes de geocercas (`Enter` / `Dwell` / `Exit`).
+## Stack y versiones
 
----
+| Componente | Versión |
+|---|---|
+| Kotlin | 2.0.20 (JVM target 17) |
+| Android Gradle Plugin | 8.5.2 |
+| Gradle Wrapper | 8.7 |
+| compileSdk / targetSdk | 35 |
+| minSdk | 26 (Android 8.0) |
+| Jetpack Compose | BOM 2024.10.00, Material 3 + Material Icons Extended |
+| Google Play Services Location | 21.3.0 (`GeofencingClient`) |
+| WorkManager | 2.9.1 |
+| Gson | 2.11.0 (persistencia en `SharedPreferences`) |
+| Leaflet | 1.9.4, empaquetado en `app/src/main/assets/leaflet/` |
 
-## 2. Visión General del Proyecto
+Versión actual de la app: **1.1.0** (`versionCode 11`, `versionName "1.1.0"` en `app/build.gradle.kts`).
 
-- **Propósito:** GeoSilence es una aplicación nativa para Android diseñada para silenciar o descartar automáticamente las notificaciones de aplicaciones seleccionadas por el usuario cuando el dispositivo se encuentra dentro de un perímetro geográfico determinado (geocerca).
-- **Stack Técnico:**
-  - **Lenguaje:** Kotlin 2.0.21 (JVM target 17).
-  - **Framework UI:** Jetpack Compose con Material 3 y Material Icons Extended.
-  - **Compatibilidad Android:** `compileSdk = 35`, `targetSdk = 35`, `minSdk = 26` (Android 8.0 Oreo).
-  - **Cartografía y Mapas:** Leaflet 1.9.4 empaquetado localmente en assets (`app/src/main/assets/leaflet/`) e incrustado directamente en el HTML leyendo los recursos desde `InteractiveMapView.kt`, con el interceptor de peticiones (`shouldInterceptRequest` hacia `https://geosilence.app/leaflet/`) como respaldo. Inicialización robusta sin depender de `window.onload`, panel visual de errores en pantalla (`#mapError`), teselas OpenStreetMap en `WebView` Android con puente JavaScript (`JavascriptInterface`), soporte táctil desacoplado del scroll contenedor y dibujo reactivo del radio de cobertura.
-  - **Geolocalización:** Google Play Services Location (`GeofencingClient`).
-  - **Intercepción de Notificaciones:** `NotificationListenerService` (`BIND_NOTIFICATION_LISTENER_SERVICE`).
-  - **Tareas Periódicas en Segundo Plano:** Android Jetpack `WorkManager` para auto-eliminación y purga programada del historial de notificaciones.
-  - **Persistencia:** `SharedPreferences` serializado con `Gson`.
-  - **Herramienta de Compilación:** Gradle Wrapper 8.9 con Android Gradle Plugin 8.7.2 (`build.gradle.kts` con Kotlin DSL y catálogo centralizado `gradle/libs.versions.toml`).
-  - **CI/CD:** GitHub Actions (`.github/workflows/build-apk.yml`) para compilar APK de depuración y publicar releases automáticas al empujar tags `v*`.
+Servicios del sistema: `NotificationListenerService` (`BIND_NOTIFICATION_LISTENER_SERVICE`), `GeofenceBroadcastReceiver` (ENTER / EXIT / DWELL), `BootReceiver` (restaura geocercas y tareas tras reiniciar) y `HistoryCleanupWorker` / `HistoryCleanupScheduler` sobre `WorkManager`.
 
-- **Estructura de Directorios:**
-  - `app/src/main/AndroidManifest.xml`: Declaración central de permisos (`BIND_NOTIFICATION_LISTENER_SERVICE`, `ACCESS_FINE_LOCATION`, `ACCESS_BACKGROUND_LOCATION`, `RECEIVE_BOOT_COMPLETED`, etc.), actividades, receptores y servicios del sistema.
-  - `app/src/main/assets/leaflet/`: Recursos estáticos de Leaflet 1.9.4 (`leaflet.js` y `leaflet.css`) empaquetados en el APK para carga y renderizado local sin dependencia de CDNs externas.
-  - `app/src/main/java/com/personal/geosilence/`:
-    - `MainActivity.kt`: Actividad principal, orquestación de solicitud de permisos en tiempo de ejecución (ubicación, notificaciones) y punto de anclaje de Jetpack Compose.
-    - `data/`:
-      - `Models.kt`: Modelos de datos (`GeofenceConfig`, `AppNotification`, `AppItem`, `RetentionPeriod`).
-      - `AppPreferences.kt`: Persistencia local de configuración de geocerca, lista de apps bloqueadas, historial y política de retención.
-    - `location/`:
-      - `GeofenceManager.kt`: Registro, monitoreo y cancelación de geocercas GPS mediante `LocationServices.getGeofencingClient`.
-    - `service/`:
-      - `NotificationBlockerService.kt`: `NotificationListenerService` que intercepta y descarta notificaciones entrantes cuando el dispositivo está en zona y la app está activada.
-      - `GeofenceBroadcastReceiver.kt`: Receptor de eventos de transición geográfica (`GEOFENCE_TRANSITION_ENTER`, `EXIT`, `DWELL`).
-      - `BootReceiver.kt`: `BroadcastReceiver` para el evento `BOOT_COMPLETED` que reestablece las geocercas y tareas de limpieza al reiniciar el teléfono.
-      - `HistoryCleanupWorker.kt`: `CoroutineWorker` que elimina notificaciones antiguas del historial según el período configurado.
-      - `HistoryCleanupScheduler.kt`: Planificador de tareas periódicas con `WorkManager`.
-    - `ui/`:
-      - `MainScreen.kt`: Pantalla principal con pestañas navegables (Ubicación, Aplicaciones, Historial, Ajustes) y modo de prueba manual.
-      - `SettingsScreen.kt`: Pantalla de ajustes para configurar retención, purga manual y accesos directos a permisos del sistema.
-      - `map/InteractiveMapView.kt`: Componente Compose que envuelve el WebView del mapa y gestiona la interceptación de toques/scroll.
-      - `map/MapHtmlProvider.kt`: Generador del código HTML/JS interactivo con Leaflet y OpenStreetMap.
-      - `theme/`: Paleta de colores (`Color.kt`), tipografía (`Type.kt`) y tema Material 3 (`Theme.kt`).
-  - `app/src/main/res/`: Recursos visuales, strings, colores y mipmaps.
-  - `.github/workflows/`: Pipeline de GitHub Actions para compilación y despliegue.
-  - `gradle/`: Configuración del wrapper y catálogo de versiones `libs.versions.toml`.
-  - `CHANGELOG.md` & `RELEASE_NOTES.md`: Documentación de historial de cambios y notas de versión.
+Permisos declarados en el manifest: `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, `ACCESS_BACKGROUND_LOCATION`, `INTERNET`, `ACCESS_NETWORK_STATE`, `POST_NOTIFICATIONS`, `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_LOCATION`, `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`, `QUERY_ALL_PACKAGES`.
 
----
+## Estructura de carpetas
 
-## 3. Reglas de Modificación de Código
-
-1. **Análisis previo:** Lee y comprende los archivos existentes relacionados antes de proponer o escribir cualquier cambio. Analiza dependencias y efectos colaterales entre servicios en segundo plano y persistencia.
-2. **Consistencia:** Respeta los patrones de diseño, nombres de variables y estilos ya establecidos en el código Kotlin y Jetpack Compose.
-3. **Integridad:** No rompas funcionalidades existentes al refactorizar o añadir nuevas características. En particular:
-   - Preserva la sincronización bidireccional entre el mapa (`InteractiveMapView.kt` / `MapHtmlProvider.kt`) y el estado Compose (`latitude`, `longitude`, `radiusMeters`).
-   - Mantén la interoperabilidad segura en el puente JavaScript (`@JavascriptInterface`).
-   - Preserva la incrustación local de recursos Leaflet en el HTML leyendo `app/src/main/assets/leaflet/` desde `InteractiveMapView.kt`, manteniendo la interceptación de peticiones hacia `https://geosilence.app/leaflet/` como respaldo redundante, la inicialización directa sin depender de `window.onload` y el panel visual de errores sobre el mapa.
-   - No elimines ni alteres inadvertidamente la lógica crítica de segundo plano (`BootReceiver`, `HistoryCleanupWorker`, `NotificationBlockerService`).
-4. **Política de Versiones:** **NO modifiques el número de versión** (`versionCode`, `versionName` en `app/build.gradle.kts`, `README.md`, `CHANGELOG.md` ni `RELEASE_NOTES.md`) a menos que el usuario lo solicite expresamente.
-5. **Preservación de comentarios:** Mantén intactos los comentarios existentes y explicaciones salvo que una modificación de código solicitada los vuelva redundantes o inexactos.
-6. **Verificación:** Comprueba la sintaxis y valida la compatibilidad de tipos antes de dar por finalizada la tarea.
-
----
-
-## 4. Flujo de Git y GitHub
-
-Antes de realizar commits o subir cambios:
-- **Inspección Previa:** Ejecuta siempre `git status` y revisa `git diff` para verificar que solo se incluyan los cambios intencionados.
-- **Mensajes de Commit:** Usa estrictamente la convención *Conventional Commits*:
-  - `feat:` para nuevas características.
-  - `fix:` para corrección de fallos o bugs.
-  - `refactor:` para refactorizaciones de código sin cambio de comportamiento.
-  - `docs:` para cambios o adiciones en documentación.
-  - `chore:` para mantenimiento, dependencias o configuración.
-- **Commits Atómicos:** Realiza commits pequeños y con un único propósito claro.
-- **Ramas:** No envíes cambios directamente a `main` si la tarea implica modificaciones estructurales de alto impacto; trabaja en ramas temáticas (`feature/` o `fix/`).
-- **Tags y Releases:** No generes ni subas tags `v*` salvo indicación explícita del usuario, ya que disparan el workflow de release en GitHub Actions.
-
----
-
-## 5. Entorno de Ejecución y Comandos Útiles
-
-El proyecto se gestiona comúnmente en entornos Linux/Android (Termux):
-
-- **Ver estado del repositorio:**
-  ```bash
-  git status
-  ```
-- **Revisar diferencias antes de añadir archivos:**
-  ```bash
-  git diff
-  ```
-- **Compilar APK de prueba (si el entorno cuenta con JDK y SDK):**
-  ```bash
-  ./gradlew assembleDebug --stacktrace
-  ```
-- **Limpiar caché de compilación:**
-  ```bash
-  ./gradlew clean
-  ```
-
-> [!NOTE]
-> En entornos móviles ligeros como Termux donde no se disponga de un runtime local de Java (JDK 17) ni Android SDK para ejecutar `./gradlew`, la compilación y generación de APKs se delega al pipeline automatizado de GitHub Actions (`.github/workflows/build-apk.yml`).
-
----
-
-## 6. Procedimiento de Auditoría y Publicación (Review & Release Manager)
-
-Cuando un agente de IA actúe en el rol de **Code Reviewer & Release Manager**, debe seguir estrictamente este flujo antes de realizar cambios o publicar en GitHub:
-
-### Paso 1: Extracción de Reglas y Contexto
-1. Leer y analizar este archivo (`AGENTS.md`).
-2. Extraer reglas operativas, estándares de calidad, comandos y directivas de despliegue.
-
-### Paso 2: Auditoría y Verificación de la Aplicación
-1. Realizar revisiones estáticas de código, linter y comprobaciones de compilación disponibles.
-2. Evaluar calidad de código, casos de borde, posibles regresiones y completitud documental.
-3. Identificar si se requieren ajustes en `AGENTS.md` o en la configuración del proyecto.
-
-### Paso 3: Propuesta y Aprobación del Usuario (Puerta Obligatoria)
-**Antes de modificar archivos o hacer push a GitHub**, el agente debe presentar un reporte estructurado de propuesta:
-
-```markdown
-## 📋 Execution & Review Proposal
-
-### 🔍 Audit Summary
-- **Status**: [PASSED / FAILED / ISSUES DETECTED]
-- **Key Findings**: [Descripción breve de las comprobaciones realizadas]
-
-### ✏️ Proposed Modifications to `AGENTS.md`
-- [Lista de modificaciones propuestas]
-
-### 📦 GitHub Release Details
-- **Target Branch**: `main` / `release/vX.Y.Z`
-- **Suggested Tag/Version**: `vX.Y.Z`
-- **Commit Message**: `release: vX.Y.Z - [Resumen]`
-
----
-⚠️ **Action Required**: Do you approve the updates to `agents.md` and the GitHub upload? (Yes/No/Modify)
+```
+.
+├── .github/workflows/build-apk.yml   # CI/CD: compila APK y publica release en tags v*
+├── app/
+│   ├── build.gradle.kts              # versionCode / versionName
+│   └── src/main/
+│       ├── AndroidManifest.xml
+│       ├── assets/leaflet/           # leaflet.js y leaflet.css (1.9.4)
+│       ├── java/com/personal/geosilence/
+│       │   ├── MainActivity.kt       # Permisos en runtime + punto de entrada Compose
+│       │   ├── data/                 # Models.kt (GeofenceZone, InstalledAppInfo,
+│       │   │                         #   BlockedNotificationRecord, HistoryRetentionCycle)
+│       │   │                         # AppPreferences.kt (SharedPreferences + Gson)
+│       │   ├── location/             # GeofenceManager.kt (registro de geocercas)
+│       │   ├── service/              # NotificationBlockerService, GeofenceBroadcastReceiver,
+│       │   │                         #   BootReceiver, HistoryCleanupWorker,
+│       │   │                         #   HistoryCleanupScheduler
+│       │   └── ui/
+│       │       ├── MainScreen.kt     # Pestañas: Ubicación, Apps, Historial, Ajustes
+│       │       ├── SettingsScreen.kt
+│       │       ├── map/InteractiveMapView.kt  # WebView del mapa en Compose
+│       │       ├── map/MapHtmlProvider.kt     # HTML/CSS/JS de Leaflet
+│       │       └── theme/            # Color, Type, Theme (Material 3)
+│       └── res/                      # Iconos, strings, colores, tema
+├── gradle/libs.versions.toml         # Catálogo de versiones
+├── build.gradle.kts, settings.gradle.kts, gradle.properties
+├── CHANGELOG.md, RELEASE_NOTES.md
+└── README.md
 ```
 
-Solo tras la aprobación explícita del usuario (`Yes` o equivalente), se procederá a ejecutar los cambios, versionar, comitear y realizar el push a GitHub con su etiqueta correspondiente.
+## Compilación y CI
+
+**Este proyecto no se compila en local.** El entorno de desarrollo es Termux sobre Android y no dispone de JDK 17 ni Android SDK.
+
+La compilación se delega a GitHub Actions (`.github/workflows/build-apk.yml`), que se dispara al:
+
+- hacer push a `main` / `master` o abrir un pull request → genera y adjunta el APK de depuración como artifact;
+- subir un tag `v*` → además crea la GitHub Release con `GeoSilence-debug.apk` y el contenido de `RELEASE_NOTES.md` como cuerpo.
+
+El workflow usa JDK 17 (Temurin) y ejecuta `./gradlew assembleDebug --stacktrace`.
+
+## Proceso de release
+
+1. Subir `versionName` y `versionCode` en `app/build.gradle.kts` (el `versionCode` nunca baja).
+2. Actualizar `CHANGELOG.md` con la entrada de la nueva versión y `RELEASE_NOTES.md` con las notas que se publicarán en la release.
+3. Actualizar la tabla de versiones de este archivo y del `README.md` si cambian.
+4. `git add -A` y commit con Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`…).
+5. `git push origin main`.
+6. Crear y subir el tag: `git tag vX.Y.Z && git push origin vX.Y.Z`.
+
+Solo se crea el tag cuando el usuario lo indica expresamente, ya que dispara la publicación de la release.
+
+## Convenciones de código
+
+- Kotlin idiomático, tipado fuerte y responsabilidad única: UI (Compose), datos (`AppPreferences` / `Models`), geolocalización (`GeofenceManager`) y servicios en segundo plano claramente separados.
+- Manejo defensivo de errores con logs informativos (`Log.e`, `Log.w`, `Log.d`) en parsing de JSON, APIs del sistema, `WebView` y `SharedPreferences`.
+- Eficiencia en batería: transiciones de geocerca mínimas y trabajo de fondo acotado en `WorkManager`.
+- Comentarios solo cuando el motivo no sea evidente en el código; mantener los existentes si siguen siendo ciertos.
+- Sin dependencias nuevas sin justificación: añadirlas primero al catálogo `gradle/libs.versions.toml`.
+
+## Reglas para agentes
+
+- **No ejecutar `./gradlew`** (ni `assembleDebug` ni `clean`) en Termux: no hay JDK/SDK. Se valida con revisión estática y el APK llega desde CI.
+- **No cambiar la lógica del mapa sin un motivo concreto.** Ya funcionó a base de ajustes delicados; cualquier cambio debe ser mínimo y explicado.
+- **Cambios mínimos y acotados** al problema solicitado: sin refactors ni "mejoras" colaterales.
+- **No subir archivos temporales** (`prompt.txt`, notas sueltas, dumps, capturas de depuración). Van en `.gitignore`.
+- No tocar `versionCode` / `versionName` ni los documentos de versión salvo que se pida.
+- No crear tags ni hacer push de releases sin autorización explícita.
+- No eliminar ni alterar `BootReceiver`, `HistoryCleanupWorker`, `HistoryCleanupScheduler` ni `NotificationBlockerService`.
+
+## Notas del mapa
+
+- `MapHtmlProvider.kt` genera el HTML: **el contenedor `#map` necesita altura explícita**. `html`, `body` y `#map` se posicionan y dimensionan a partir de `window.innerHeight` con `setProperty(..., 'important')`; sin altura computable Leaflet renderiza un lienzo de 0 px y el mapa aparece en blanco.
+- `forceMapSize()` lleva la bandera `window.__forcing` para no reentrar en sí misma, y `initMap()` usa `initMapOnce` / `initDone` para ejecutarse una sola vez. **No quitar esas banderas**: provocaban `RangeError: Maximum call stack size exceeded` al inicializar.
+- `L.map()` se crea antes de cualquier ajuste de tamaño; `invalidateSize()` se difiere con `setTimeout` y en `resize`/`orientationchange` solo se llama a `forceMapSize()`.
+- Leaflet se incrusta inline desde `assets/leaflet/`, con `shouldInterceptRequest` hacia `https://geosilence.app/leaflet/` como respaldo y el panel `#mapError` para mostrar errores de JS.
+- La sincronización con Compose es bidireccional: `window.setLocation`, `window.setRadius` y `forceMapSize` desde Kotlin; `AndroidBridge.onLocationSelected` desde el JavaScript.
