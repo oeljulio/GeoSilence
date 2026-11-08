@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.personal.geosilence.BuildConfig
 import com.personal.geosilence.data.AppPreferences
 import com.personal.geosilence.data.HistoryRetentionCycle
 import com.personal.geosilence.service.HistoryCleanupScheduler
@@ -271,7 +272,7 @@ fun SettingsScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text("GeoSilence", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                Text("Versión 1.1.4", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
+                Text("Versión ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = "Silencio inteligente y selectivo activado por geolocalización.",
