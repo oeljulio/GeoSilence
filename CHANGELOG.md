@@ -4,7 +4,7 @@ Todos los cambios notables en este proyecto se documentan en este archivo, sigui
 
 ---
 
-## [1.1.0] - 2026-11-06
+## [1.1.0] - 2026-11-08
 
 ### 🚀 Nuevas Funcionalidades
 * **🗺️ Selección de Zona Geográfica en Mapa Interactivo con Radio Configurable**:
@@ -31,7 +31,9 @@ Todos los cambios notables en este proyecto se documentan en este archivo, sigui
 ### 🔧 Mejoras y Ajustes Técnicos
 * Permisos `INTERNET` y `ACCESS_NETWORK_STATE` en `AndroidManifest.xml` para la descarga de teselas cartográficas.
 * Dependencia `androidx.work:work-runtime-ktx` en el catálogo de versiones y en `build.gradle.kts`.
-* Integración de `RELEASE_NOTES.md` en el pipeline de GitHub Actions (`build-apk.yml`).
+* Kotlin actualizado a 2.0.21.
+* `networkTimeout` del Gradle Wrapper elevado a 60 s para evitar fallos de descarga del wrapper en CI.
+* Integración de `RELEASE_NOTES.md` en el pipeline de GitHub Actions (`build-apk.yml`): la release publica `GeoSilence-debug.apk` con las notas de `RELEASE_NOTES.md` como cuerpo al subir un tag `vX.Y.Z`.
 
 ---
 
