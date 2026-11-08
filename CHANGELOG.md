@@ -4,6 +4,13 @@ Todos los cambios notables en este proyecto se documentan en este archivo, sigui
 
 ---
 
+## [1.1.8] - 2026-11-08
+
+### 🐛 Correcciones
+* **🗺️ Forzar altura del mapa por JS y diagnóstico ampliado:** `#map`, `html` y `body` reciben `height = window.innerHeight` con prioridad máxima (`setProperty(..., 'important')`) antes de crear el mapa y en `resize`/`setTimeout` (0, 300 y 1000 ms), junto a `map.invalidateSize()`. Se eliminan las alturas en `%` dependientes del padre y el diagnóstico `[DEBUG]` muestra `v=1.1.8`, estilo computado, atributo `style` y altura de cada padre hasta `body`.
+
+---
+
 ## [1.1.7] - 2026-11-08
 
 ### 🐛 Correcciones

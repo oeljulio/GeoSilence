@@ -45,9 +45,14 @@ object MapHtmlProvider {
       -webkit-user-select: none;
       box-sizing: border-box;
     }
-    html, body { height: 100%; margin: 0; padding: 0; }
+    /* Posicionamiento estático (sin alturas en % dependientes del padre, que se
+       resuelven a 0 si el contenedor no tiene altura computable) */
     html, body {
+      position: relative;
       width: 100%;
+      margin: 0;
+      padding: 0;
+      min-height: 0;
       background-color: #f1f3f4;
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -56,13 +61,17 @@ object MapHtmlProvider {
       position: absolute;
       top: 0;
       left: 0;
-      right: 0;
-      bottom: 0;
       width: 100%;
-      height: 100%;
+      /* Altura fija inicialmente; se sobreescribe con window.innerHeight por JS */
+      height: 280px;
+      min-height: 280px;
+      display: block;
+      z-index: 0;
     }
     .leaflet-container {
+      width: 100%;
       height: 100%;
+      display: block;
     }
     .leaflet-control-attribution {
       font-size: 9px !important;
@@ -175,11 +184,48 @@ object MapHtmlProvider {
       }
     }
 
+    // Fuerza con prioridad máxima el tamaño del contenedor del mapa y de html/body
+    function forceMapSize() {
+      var h = (window.innerHeight > 0 ? window.innerHeight : 280) + 'px';
+      var root = document.documentElement;
+      if (root) {
+        root.style.setProperty('height', h, 'important');
+        root.style.setProperty('margin', '0', 'important');
+        root.style.setProperty('padding', '0', 'important');
+        root.style.setProperty('overflow', 'hidden', 'important');
+      }
+      if (document.body) {
+        document.body.style.setProperty('height', h, 'important');
+        document.body.style.setProperty('margin', '0', 'important');
+        document.body.style.setProperty('padding', '0', 'important');
+        document.body.style.setProperty('overflow', 'hidden', 'important');
+      }
+      var m = document.getElementById('map');
+      if (m) {
+        m.style.setProperty('position', 'absolute', 'important');
+        m.style.setProperty('top', '0', 'important');
+        m.style.setProperty('left', '0', 'important');
+        m.style.setProperty('width', '100%', 'important');
+        m.style.setProperty('height', h, 'important');
+        m.style.setProperty('min-height', h, 'important');
+        m.style.setProperty('display', 'block', 'important');
+      }
+    }
+
+    // Fuerza el tamaño y refresca el lienzo interno de Leaflet
+    function refreshMapSize() {
+      forceMapSize();
+      if (map) map.invalidateSize();
+    }
+
     function initMap() {
       if (typeof L === 'undefined') {
         showMapError('Leaflet no cargó');
         return;
       }
+
+      // Forzar altura antes de crear el mapa para que Leaflet mida el contenedor correctamente
+      forceMapSize();
 
       map = L.map('map', {
         zoomControl: true,
@@ -187,9 +233,11 @@ object MapHtmlProvider {
       }).setView([currentLat, currentLng], 15);
 
       // Recálculo diferido del tamaño: el contenedor puede no tener altura final en el primer render
-      setTimeout(function() { map.invalidateSize(); }, 0);
-      setTimeout(function() { map.invalidateSize(); }, 300);
-      window.addEventListener('resize', function() { map.invalidateSize(); });
+      setTimeout(refreshMapSize, 0);
+      setTimeout(refreshMapSize, 300);
+      setTimeout(refreshMapSize, 1000);
+      window.addEventListener('resize', refreshMapSize);
+      window.addEventListener('orientationchange', refreshMapSize);
 
       L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
@@ -272,6 +320,9 @@ object MapHtmlProvider {
       }
     };
 
+    // Expuesta para que Android pueda forzar el recálculo de tamaño desde el WebView
+    window.forceMapSize = refreshMapSize;
+
     // Inicialización inmediata y robusta del mapa sin depender de window.onload
     try {
       initMap();
@@ -279,7 +330,7 @@ object MapHtmlProvider {
       showMapError('initMap: ' + e);
     }
     window.onload = function() {
-      if (map) map.invalidateSize();
+      refreshMapSize();
     };
   </script>
 </body>

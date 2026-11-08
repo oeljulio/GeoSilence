@@ -163,10 +163,16 @@ fun InteractiveMapView(
                                 override fun onPageFinished(view: WebView?, url: String?) {
                                     super.onPageFinished(view, url)
                                     isMapLoaded = true
-                                    view?.evaluateJavascript("if (window.map) { window.map.invalidateSize(); }", null)
+                                    // Fuerza la altura del contenedor y recalcula el tamaño de Leaflet
+                                    view?.evaluateJavascript(
+                                        "if (window.forceMapSize) { window.forceMapSize(); }" +
+                                            " else if (window.map) { window.map.invalidateSize(); }",
+                                        null
+                                    )
 
                                     // Script de diagnóstico envuelto en IIFE que siempre devuelve un string
-                                    // Incluye: location.href, readyState, typeof L, estado #map, dimensiones, UA/Chrome, #mapError
+                                    // Incluye: versión, location.href, readyState, typeof L, estado y estilo computado de #map,
+                                    // atributo style, cadena de padres hasta body, dimensiones, UA/Chrome y #mapError
                                     val debugScript = """
                                         (function() {
                                             try {
@@ -186,18 +192,41 @@ fun InteractiveMapView(
                                                 var ua = navigator.userAgent;
                                                 var chromeMatch = ua.match(/Chrome\/[0-9.]+/);
                                                 var chromeVer = chromeMatch ? chromeMatch[0] : 'desconocido';
-                                                return 'loc=' + encodeURIComponent(url) +
+                                                var cs = mapEl && window.getComputedStyle ? window.getComputedStyle(mapEl) : null;
+                                                var csHeight = cs ? cs.height : 'null';
+                                                var csPosition = cs ? cs.position : 'null';
+                                                var csDisplay = cs ? cs.display : 'null';
+                                                var styleAttr = mapEl ? (mapEl.getAttribute('style') || '').substring(0, 40) : 'null';
+                                                var chain = '';
+                                                var node = mapEl ? mapEl.parentElement : null;
+                                                var depth = 0;
+                                                while (node && depth < 8) {
+                                                    chain += (depth === 0 ? '' : ' < ') +
+                                                             (node.tagName || '?') +
+                                                             (node.id ? '#' + node.id : '') +
+                                                             '=' + node.offsetHeight;
+                                                    if (node === document.body) break;
+                                                    node = node.parentElement;
+                                                    depth++;
+                                                }
+                                                return 'v=1.1.8' +
+                                                       ' | loc=' + encodeURIComponent(url) +
                                                        ' | ready=' + readyState +
                                                        ' | LType=' + lType +
                                                        ' | mapExists=' + mapExists +
                                                        ' | mapClass=' + mapClass +
                                                        ' | mapSize=' + mapW + 'x' + mapH +
                                                        ' | win=' + winW + 'x' + winH +
+                                                       ' | csH=' + csHeight +
+                                                       ' | csPos=' + csPosition +
+                                                       ' | csDisp=' + csDisplay +
+                                                       ' | style="' + styleAttr + '"' +
+                                                       ' | parents=' + (chain || 'null') +
                                                        ' | htmlLen=' + htmlLen +
                                                        ' | mapError=' + errText +
                                                        ' | UA=' + chromeVer;
                                             } catch (e) {
-                                                return 'EXC: ' + e.message;
+                                                return 'v=1.1.8 | EXC: ' + e.message;
                                             }
                                         })()
                                     """.trimIndent()

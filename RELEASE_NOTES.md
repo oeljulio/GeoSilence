@@ -1,3 +1,18 @@
+## 🛠️ GeoSilence v1.1.8 - Forzar altura del mapa por JS y diagnóstico ampliado
+
+Esta versión (**v1.1.8**) refuerza la corrección del mapa en blanco: el contenedor `#map` seguía midiendo `337x0`, así que ahora su altura se fuerza por JavaScript con prioridad máxima y el diagnóstico `[DEBUG]` muestra más información.
+
+---
+
+### 🐛 Correcciones
+
+* **Forzar altura del mapa por JS y diagnóstico ampliado:**
+  * `#map`, `document.documentElement` y `document.body` reciben `height = window.innerHeight` con `style.setProperty(..., 'important')` antes de crear el mapa, en `resize` y vía `setTimeout` a 0, 300 y 1000 ms, seguido de `map.invalidateSize()`.
+  * Se eliminan las alturas en `%` dependientes de un padre sin altura computable (`#map` parte de `280px` fijos hasta la asignación por JS).
+  * El diagnóstico `[DEBUG]` inicia con `v=1.1.8` y añade `getComputedStyle` (height/position/display), el atributo `style` de `#map` (40 caracteres) y la altura de cada padre hasta `body`.
+
+---
+
 ## 🛠️ GeoSilence v1.1.7 - Corrección de altura del mapa (height 0)
 
 Esta versión (**v1.1.7**) corrige el mapa en blanco de la pestaña Ubicación: el diagnóstico mostraba `mapSize=337x0`, es decir, Leaflet cargaba correctamente pero el contenedor `#map` tenía altura cero.
