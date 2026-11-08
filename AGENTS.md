@@ -2,7 +2,7 @@
 
 ## Resumen del proyecto
 
-GeoSilence es una app nativa de Android que silencia y descarta las notificaciones de las aplicaciones seleccionadas por el usuario cuando el dispositivo está dentro de una geocerca definida sobre un mapa (oficina, casa, universidad…). El usuario elige el centro y el radio de la zona, las apps a bloquear y el ciclo de retención del historial.
+GeoSilence es una app nativa de Android que silencia y descarta las notificaciones de las aplicaciones seleccionadas por el usuario cuando el dispositivo está dentro **o fuera** de una geocerca definida sobre un mapa (oficina, casa, universidad…), según el comportamiento elegido. El usuario elige el centro y el radio de la zona en un selector a pantalla completa, el modo de bloqueo (dentro / fuera), las apps a bloquear y el ciclo de retención del historial.
 
 ## Stack y versiones
 
@@ -14,12 +14,14 @@ GeoSilence es una app nativa de Android que silencia y descarta las notificacion
 | compileSdk / targetSdk | 35 |
 | minSdk | 26 (Android 8.0) |
 | Jetpack Compose | BOM 2024.10.00, Material 3 + Material Icons Extended |
-| Google Play Services Location | 21.3.0 (`GeofencingClient`) |
+| Google Play Services Location | 21.3.0 (`GeofencingClient` y `FusedLocationProviderClient`) |
 | WorkManager | 2.9.1 |
 | Gson | 2.11.0 (persistencia en `SharedPreferences`) |
 | Leaflet | 1.9.4, empaquetado en `app/src/main/assets/leaflet/` |
 
-Versión actual de la app: **1.1.0** (`versionCode 11`, `versionName "1.1.0"` en `app/build.gradle.kts`).
+Versión actual de la app: **1.2.0** (`versionCode 12`, `versionName "1.2.0"` en `app/build.gradle.kts`).
+
+Lógica de bloqueo: `GeofenceZone.blockInside` (por defecto `true`; el JSON antiguo de Gson sigue cargando) decide si se bloquea dentro de la zona o fuera de ella. `AppPreferences.shouldBlockNow()` compara `isInsideZone` con el `blockInside` de la zona guardada y es lo que consulta `NotificationBlockerService`.
 
 Servicios del sistema: `NotificationListenerService` (`BIND_NOTIFICATION_LISTENER_SERVICE`), `GeofenceBroadcastReceiver` (ENTER / EXIT / DWELL), `BootReceiver` (restaura geocercas y tareas tras reiniciar) y `HistoryCleanupWorker` / `HistoryCleanupScheduler` sobre `WorkManager`.
 
@@ -37,17 +39,22 @@ Permisos declarados en el manifest: `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCAT
 │       ├── assets/leaflet/           # leaflet.js y leaflet.css (1.9.4)
 │       ├── java/com/personal/geosilence/
 │       │   ├── MainActivity.kt       # Permisos en runtime + punto de entrada Compose
-│       │   ├── data/                 # Models.kt (GeofenceZone, InstalledAppInfo,
-│       │   │                         #   BlockedNotificationRecord, HistoryRetentionCycle)
-│       │   │                         # AppPreferences.kt (SharedPreferences + Gson)
+│       │   ├── data/                 # Models.kt (GeofenceZone con blockInside,
+│       │   │                         #   InstalledAppInfo, BlockedNotificationRecord,
+│       │   │                         #   HistoryRetentionCycle)
+│       │   │                         # AppPreferences.kt (SharedPreferences + Gson,
+│       │   │                         #   shouldBlockNow())
 │       │   ├── location/             # GeofenceManager.kt (registro de geocercas)
+│       │   │                         # LocationHelper.kt (permiso y posición actual)
 │       │   ├── service/              # NotificationBlockerService, GeofenceBroadcastReceiver,
 │       │   │                         #   BootReceiver, HistoryCleanupWorker,
 │       │   │                         #   HistoryCleanupScheduler
 │       │   └── ui/
-│       │       ├── MainScreen.kt     # Pestañas: Ubicación, Apps, Historial, Ajustes
+│       │       ├── MainScreen.kt     # Pestañas (Ubicación, Apps, Historial, Ajustes),
+│       │       │                     #   borrador de zona y tarjeta de estado
+│       │       ├── MapPickerScreen.kt # Selector de zona a pantalla completa
 │       │       ├── SettingsScreen.kt
-│       │       ├── map/InteractiveMapView.kt  # WebView del mapa en Compose
+│       │       ├── map/InteractiveMapView.kt  # Host del WebView del mapa en Compose
 │       │       ├── map/MapHtmlProvider.kt     # HTML/CSS/JS de Leaflet
 │       │       └── theme/            # Color, Type, Theme (Material 3)
 │       └── res/                      # Iconos, strings, colores, tema
@@ -103,4 +110,7 @@ Solo se crea el tag cuando el usuario lo indica expresamente, ya que dispara la 
 - `forceMapSize()` lleva la bandera `window.__forcing` para no reentrar en sí misma, y `initMap()` usa `initMapOnce` / `initDone` para ejecutarse una sola vez. **No quitar esas banderas**: provocaban `RangeError: Maximum call stack size exceeded` al inicializar.
 - `L.map()` se crea antes de cualquier ajuste de tamaño; `invalidateSize()` se difiere con `setTimeout` y en `resize`/`orientationchange` solo se llama a `forceMapSize()`.
 - Leaflet se incrusta inline desde `assets/leaflet/`, con `shouldInterceptRequest` hacia `https://geosilence.app/leaflet/` como respaldo y el panel `#mapError` para mostrar errores de JS.
-- La sincronización con Compose es bidireccional: `window.setLocation`, `window.setRadius` y `forceMapSize` desde Kotlin; `AndroidBridge.onLocationSelected` desde el JavaScript.
+- El mapa solo se monta dentro de `MapPickerScreen.kt`, a pantalla completa; la pestaña **Ubicación** muestra un resumen de la zona y abre el selector. `InteractiveMapView.kt` es únicamente el host: un `AndroidView` con el `WebView` a `fillMaxSize()` que, al terminar de cargar, aplica `setRadius` y luego `fitCircle` (con un `delay` de 400 ms) y destruye el `WebView` en `onRelease`.
+- `window.setLocation` solo recentra si el punto queda fuera de los límites actuales (`getBounds().pad(-0.25)`); el encuadre inicial y el del botón *Mi ubicación* van por `window.fitCircle`, que hace `fitBounds` de los límites del círculo (`maxZoom: 17`, con `try/catch`).
+- El control de zoom de Leaflet se coloca arriba a la derecha (`zoomControl: false` en `L.map` + `L.control.zoom({ position: 'topright' })`).
+- La sincronización con Compose es bidireccional: `window.setLocation`, `window.setRadius`, `window.fitCircle` y `forceMapSize` desde Kotlin; `AndroidBridge.onLocationSelected` desde el JavaScript.

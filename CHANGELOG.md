@@ -4,6 +4,25 @@ Todos los cambios notables en este proyecto se documentan en este archivo, sigui
 
 ---
 
+## [1.2.0] - 2026-11-08
+
+### 🚀 Nuevas Funcionalidades
+* **🗺️ Selector de zona a pantalla completa:** la pestaña **Ubicación** ya no incrusta el mapa; muestra un resumen de la zona (nombre, coordenadas y radio) y abre `MapPickerScreen`, una pantalla completa con el mapa, el botón *Mi ubicación*, el slider de radio (50 m a 3.000 m) y los accesos rápidos de 100 m a 2 km. *Listo* aplica el borrador y cerrar o el botón atrás lo descarta.
+* **🎚️ Bloqueo dentro o fuera de la zona:** nueva opción por zona `GeofenceZone.blockInside` con dos casillas mutuamente excluyentes. `AppPreferences.shouldBlockNow()` compara `isInsideZone` con ese valor y es lo que consulta `NotificationBlockerService`.
+* **📍 `LocationHelper`:** utilidad nueva que comprueba el permiso de ubicación y obtiene la posición actual con `FusedLocationProviderClient` (con respaldo a `lastLocation` y tiempo máximo acotado); se usa para centrar el mapa y para recalcular si estás dentro o fuera al guardar la zona.
+* **✅ Guardado con confirmación:** la zona solo se da de alta como geocerca cuando se guarda, el botón indica si hay cambios sin guardar y el resultado se informa en la pantalla.
+
+### 🐛 Correcciones
+* **🔔 Aviso de notificaciones siempre actualizado:** el aviso de permisos y la tarjeta de estado se refrescan cada segundo mientras la app está abierta, por lo que desaparecen al conceder el permiso sin reiniciar.
+* **🛠️ Ayuda para ajustes restringidos:** si Android sigue denegando el acceso a notificaciones, el aviso explica la ruta (*Info. de la app → ⋮ → Permitir ajustes restringidos*) y ofrece un botón directo a la pantalla de información de la app.
+
+### 🔧 Mejoras y Ajustes Técnicos
+* **🧭 Tarjeta de estado con modo:** muestra *bloqueando* / *permitiendo* / *desactivado* según el modo configurado e indica si estás dentro o fuera de la zona.
+* **🗺️ Ajustes del mapa:** control de zoom arriba a la derecha, encuadre automático del círculo (`window.fitCircle`) y `setLocation` que solo recentra cuando el punto queda fuera de los límites visibles.
+* `InteractiveMapView.kt` queda como host mínimo del `WebView`; la versión sube a `versionCode 12` / `versionName "1.2.0"`.
+
+---
+
 ## [1.1.0] - 2026-11-08
 
 ### 🚀 Nuevas Funcionalidades
