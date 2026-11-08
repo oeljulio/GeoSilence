@@ -5,7 +5,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
-import android.os.CancellationSignal
+import com.google.android.gms.tasks.CancellationTokenSource
 import android.util.Log
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.LocationServices
@@ -47,17 +47,17 @@ object LocationHelper {
 
         val current = try {
             withTimeoutOrNull(timeoutMs) {
-                suspendCancellableCoroutine { continuation ->
-                    val cancellationSignal = CancellationSignal()
+                suspendCancellableCoroutine<Location?> { continuation ->
+                    val cancellationSource = CancellationTokenSource()
                     continuation.invokeOnCancellation {
                         try {
-                            cancellationSignal.cancel()
+                            cancellationSource.cancel()
                         } catch (e: Exception) {
                             Log.w(TAG, "No se pudo cancelar la petición de ubicación", e)
                         }
                     }
                     try {
-                        client.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cancellationSignal)
+                        client.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cancellationSource.token)
                             .addOnSuccessListener { location ->
                                 if (continuation.isActive) continuation.resume(location)
                             }
@@ -80,7 +80,7 @@ object LocationHelper {
 
         return try {
             withTimeoutOrNull(FALLBACK_TIMEOUT_MS) {
-                suspendCancellableCoroutine { continuation ->
+                suspendCancellableCoroutine<Location?> { continuation ->
                     client.lastLocation
                         .addOnSuccessListener { location ->
                             if (continuation.isActive) continuation.resume(location)
