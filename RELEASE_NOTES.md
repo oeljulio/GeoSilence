@@ -1,3 +1,18 @@
+## 🛠️ GeoSilence v1.1.7 - Corrección de altura del mapa (height 0)
+
+Esta versión (**v1.1.7**) corrige el mapa en blanco de la pestaña Ubicación: el diagnóstico mostraba `mapSize=337x0`, es decir, Leaflet cargaba correctamente pero el contenedor `#map` tenía altura cero.
+
+---
+
+### 🐛 Correcciones
+
+* **🗺️ Corrección de altura del mapa (height 0):**
+  * `html, body { height: 100%; margin: 0; padding: 0; }` y `#map` posicionado de forma absoluta (`top/left/right/bottom: 0`) con `width/height: 100%`, eliminando las reglas de altura previas que colapsaban el contenedor.
+  * Recálculo del tamaño de Leaflet con `map.invalidateSize()` a los 0 ms y 300 ms tras crear el mapa, más `window.addEventListener('resize', ...)` para redimensionados del WebView.
+* **📊 Diagnóstico `[DEBUG]`:** Se mantiene intacta la barra de diagnóstico en pantalla y el resto de la lógica del mapa.
+
+---
+
 ## 🛠️ GeoSilence v1.1.5 - Diagnóstico Temporal del WebView del Mapa
 
 Esta versión (**v1.1.5**) añade instrumentación de depuración en `InteractiveMapView.kt` para investigar el problema del mapa en blanco en la pestaña Ubicación, manteniendo la incrustación directa de Leaflet 1.9.4 desde assets.

@@ -45,17 +45,23 @@ object MapHtmlProvider {
       -webkit-user-select: none;
       box-sizing: border-box;
     }
+    html, body { height: 100%; margin: 0; padding: 0; }
     html, body {
       width: 100%;
-      height: 100%;
-      margin: 0;
-      padding: 0;
       background-color: #f1f3f4;
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
     #map {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
       width: 100%;
+      height: 100%;
+    }
+    .leaflet-container {
       height: 100%;
     }
     .leaflet-control-attribution {
@@ -179,6 +185,11 @@ object MapHtmlProvider {
         zoomControl: true,
         attributionControl: true
       }).setView([currentLat, currentLng], 15);
+
+      // Recálculo diferido del tamaño: el contenedor puede no tener altura final en el primer render
+      setTimeout(function() { map.invalidateSize(); }, 0);
+      setTimeout(function() { map.invalidateSize(); }, 300);
+      window.addEventListener('resize', function() { map.invalidateSize(); });
 
       L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,

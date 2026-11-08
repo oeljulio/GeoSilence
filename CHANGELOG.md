@@ -4,6 +4,13 @@ Todos los cambios notables en este proyecto se documentan en este archivo, sigui
 
 ---
 
+## [1.1.7] - 2026-11-08
+
+### 🐛 Correcciones
+* **🗺️ Corrección de altura del mapa (height 0):** `#map` se posiciona de forma absoluta ocupando todo el viewport (`top/left/right/bottom: 0`) y `html, body` fijan `height: 100%` con márgenes y padding a cero, sustituyendo las reglas de altura que colapsaban el contenedor. Se recalcula el tamaño de Leaflet con `map.invalidateSize()` a los 0 ms y 300 ms tras crear el mapa y en cada evento `resize` de la ventana.
+
+---
+
 ## [1.1.6] - 2026-11-08
 
 ### 🔧 Mejoras
