@@ -4,6 +4,13 @@ Todos los cambios notables en este proyecto se documentan en este archivo, sigui
 
 ---
 
+## [1.1.6] - 2026-11-08
+
+### 🔧 Mejoras
+* **📊 Diagnóstico WebView v2:** Script de diagnóstico en `onPageFinished` envuelto en IIFE que siempre devuelve una cadena, capturando `location.href`, `readyState`, `typeof L`, estado del mapa, dimensiones, longitud HTML y texto de `#mapError`. Además, se añadió seguimiento de URL en `onPageStarted`/`onPageFinished` y acumulación de `debugInfo` sin sobrescribir lecturas previas.
+
+---
+
 ## [1.1.5] - 2026-11-07
 
 ### 🔧 Cambios Técnicos

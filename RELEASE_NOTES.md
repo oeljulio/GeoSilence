@@ -16,6 +16,20 @@ Esta versión (**v1.1.5**) añade instrumentación de depuración en `Interactiv
 
 ---
 
+## 🛠️ GeoSilence v1.1.6 - Diagnóstico WebView v2
+
+Esta versión (**v1.1.6**) mejora el sistema de diagnóstico del WebView con un script más robusto y completas capacidades de seguimiento.
+
+---
+
+### 🔧 Mejoras
+
+* **📊 Diagnóstico WebView v2:** Script de diagnóstico en `onPageFinished` envuelto en IIFE que siempre devuelve una cadena, capturando `location.href`, `readyState`, `typeof L`, estado del mapa (`sí`/`no`), dimensiones, longitud del HTML y texto de `#mapError`. Se añadió acumulación de `debugInfo` sin sobrescribir lecturas previas.
+* **📌 Seguimiento de Carga:** Se añadió registro de URL en `onPageStarted` (`start:`) y `onPageFinished` (`fin:`), con la URL truncada a 40 caracteres para mantener la legibilidad en la barra informativa.
+* **🔒 Acumulación de Diagnóstico:** El `debugInfo` ahora acumula resultados anteriores en lugar de sobrescribirlos, permitiendo historial de diagnósticos a lo largo del tiempo.
+
+---
+
 ## 🛠️ GeoSilence v1.1.4 - Incrustación Directa de Leaflet y Panel de Diagnóstico en Mapa
 
 Esta versión (**v1.1.4**) corrige de forma definitiva la visualización del mapa en blanco en la pestaña Ubicación al incrustar el código fuente de Leaflet 1.9.4 directamente en el HTML desde los assets locales, independizar el ciclo de renderizado de `window.onload` y habilitar un panel visual de diagnóstico de errores en pantalla.

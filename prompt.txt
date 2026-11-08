@@ -1,0 +1,29 @@
+Lee primero AGENTS.md y sigue su protocolo de release (CHANGELOG.md, RELEASE_NOTES.md, versión).
+
+PROBLEMA: en GeoSilence v1.1.4, la pestaña Ubicación muestra el mapa en blanco. No aparece Leaflet, ni los botones +/-, ni el panel rojo #mapError. La insignia "Radio: 200 m" sí se ve, pero es texto fijo que genera Kotlin en el HTML. El mismo HTML de MapHtmlProvider funciona en Chromium de escritorio, así que el fallo parece estar en el WebView del móvil (JS que no se ejecuta, WebView que no pinta o contenedor de tamaño 0). Necesito un diagnóstico visible en pantalla.
+
+TAREA: edita SOLO app/src/main/java/com/personal/geosilence/ui/map/InteractiveMapView.kt. No toques MapHtmlProvider.kt ni los assets de Leaflet.
+
+1. Añade en el composable: var debugInfo by remember { mutableStateOf("WebView: iniciando...") }
+
+2. En el factory del WebView, antes de settings.javaScriptEnabled = true:
+   - WebView.setWebContentsDebuggingEnabled(true)
+   - setBackgroundColor(android.graphics.Color.parseColor("#F1F3F4"))
+
+3. En WebChromeClient.onConsoleMessage: mantén el Log.d actual y, si messageLevel() == ConsoleMessage.MessageLevel.ERROR, añade a debugInfo " | JS-ERR: " + el mensaje.
+
+4. En el WebViewClient, conserva shouldInterceptRequest y añade:
+   - onReceivedError(view, request: WebResourceRequest?, error: WebResourceError?): si request?.isForMainFrame == true, añade a debugInfo " | ERR-PAGINA: " + error?.description
+   - onRenderProcessGone(view, detail: RenderProcessGoneDetail?): Boolean → añade a debugInfo " | RENDERER-CAIDO crash=" + detail?.didCrash() y devuelve true
+   - En onPageFinished, además de lo existente, ejecuta evaluateJavascript con un raw string de Kotlin (""" ... """) que devuelva una cadena con: typeof L, className de #map (primeros 18 caracteres), offsetWidth y offsetHeight de #map, window.innerWidth x window.innerHeight, innerText de #mapError y la versión de Chrome (navigator.userAgent.match(/Chrome\/[0-9.]+/)). Guarda el resultado en debugInfo con el prefijo "WebView: ". Repite la evaluación 2000 ms después con Handler(Looper.getMainLooper()).postDelayed y el prefijo "WebView(2s): ".
+
+5. En la barra informativa bajo el mapa, cambia el texto del hint a:
+   "Toca el mapa o arrastra el pin rojo para centrar la zona\n[DEBUG] " + debugInfo
+
+RESTRICCIONES:
+- Debe compilar con Kotlin 2.0.21, compileSdk 35, minSdk 26. Añade los imports que falten (RenderProcessGoneDetail, WebResourceError).
+- NO ejecutes gradle ni intentes compilar en Termux: el APK se genera con GitHub Actions.
+- No cambies nada más de la lógica del mapa.
+- Sube a versionName "1.1.5" y versionCode 7 en app/build.gradle.kts.
+- Añade una entrada breve en CHANGELOG.md y RELEASE_NOTES.md: "Diagnóstico temporal del WebView del mapa".
+- Al terminar, revisa el código para detectar errores de sintaxis o imports faltantes y haz commit con el mensaje "v1.1.5: diagnóstico del WebView del mapa". No hagas push hasta que yo lo confirme.

@@ -165,35 +165,65 @@ fun InteractiveMapView(
                                     isMapLoaded = true
                                     view?.evaluateJavascript("if (window.map) { window.map.invalidateSize(); }", null)
 
+                                    // Script de diagnóstico envuelto en IIFE que siempre devuelve un string
+                                    // Incluye: location.href, readyState, typeof L, estado #map, dimensiones, UA/Chrome, #mapError
                                     val debugScript = """
                                         (function() {
-                                            var mapEl = document.getElementById('map');
-                                            var errorEl = document.getElementById('mapError');
-                                            var ua = navigator.userAgent;
-                                            var chromeMatch = ua.match(/Chrome\\/[0-9.]+/);
-                                            var chromeVer = chromeMatch ? chromeMatch[0] : 'desconocido';
-                                            var mapClass = mapEl ? (mapEl.className || '').substring(0, 18) : 'null';
-                                            var mapW = mapEl ? mapEl.offsetWidth : 0;
-                                            var mapH = mapEl ? mapEl.offsetHeight : 0;
-                                            var errText = errorEl ? errorEl.innerText.substring(0, 120) : 'null';
-                                            return 'typeof L=' + (typeof L) +
-                                                   ' | #map.class=' + mapClass +
-                                                   ' | #map.size=' + mapW + 'x' + mapH +
-                                                   ' | win=' + window.innerWidth + 'x' + window.innerHeight +
-                                                   ' | #mapError=' + errText +
-                                                   ' | UA=' + chromeVer;
+                                            try {
+                                                var mapEl = document.getElementById('map');
+                                                var errorEl = document.getElementById('mapError');
+                                                var url = document.location.href;
+                                                var readyState = document.readyState;
+                                                var lType = typeof L;
+                                                var mapExists = mapEl !== null ? 'sí' : 'no';
+                                                var mapClass = mapEl ? (mapEl.className || '').substring(0, 18) : 'null';
+                                                var mapW = mapEl ? mapEl.offsetWidth : 0;
+                                                var mapH = mapEl ? mapEl.offsetHeight : 0;
+                                                var winW = window.innerWidth;
+                                                var winH = window.innerHeight;
+                                                var htmlLen = document.documentElement.outerHTML.length;
+                                                var errText = errorEl ? errorEl.innerText.substring(0, 60) : 'null';
+                                                var ua = navigator.userAgent;
+                                                var chromeMatch = ua.match(/Chrome\/[0-9.]+/);
+                                                var chromeVer = chromeMatch ? chromeMatch[0] : 'desconocido';
+                                                return 'loc=' + encodeURIComponent(url) +
+                                                       ' | ready=' + readyState +
+                                                       ' | LType=' + lType +
+                                                       ' | mapExists=' + mapExists +
+                                                       ' | mapClass=' + mapClass +
+                                                       ' | mapSize=' + mapW + 'x' + mapH +
+                                                       ' | win=' + winW + 'x' + winH +
+                                                       ' | htmlLen=' + htmlLen +
+                                                       ' | mapError=' + errText +
+                                                       ' | UA=' + chromeVer;
+                                            } catch (e) {
+                                                return 'EXC: ' + e.message;
+                                            }
                                         })()
                                     """.trimIndent()
 
+                                    // Acumular en debugInfo sin pisar lectura anterior
+                                    val accumKey = "WebView: "
                                     view?.evaluateJavascript(debugScript) { result ->
-                                        debugInfo = "WebView: " + (result ?: "sin respuesta")
+                                        if (result != null && result != "sin respuesta") {
+                                            debugInfo = accumKey + result + " | " + debugInfo
+                                        }
                                     }
 
                                     Handler(Looper.getMainLooper()).postDelayed({
                                         view?.evaluateJavascript(debugScript) { result ->
-                                            debugInfo = "WebView(2s): " + (result ?: "sin respuesta")
+                                            if (result != null && result != "sin respuesta") {
+                                                debugInfo = "WebView(2s): " + result + " | " + debugInfo
+                                            }
                                         }
                                     }, 2000)
+                                }
+
+                                override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
+                                    super.onPageStarted(view, url, favicon)
+                                    // Acumular URL de inicio sin pisar lectura anterior
+                                    val urlTruncated = url?.substring(0, Math.min(url.length, 40)) ?: "desconocido"
+                                    debugInfo = "start: " + urlTruncated + " | " + debugInfo
                                 }
                             }
 
