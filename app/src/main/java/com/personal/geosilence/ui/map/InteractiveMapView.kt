@@ -163,10 +163,9 @@ fun InteractiveMapView(
                                 override fun onPageFinished(view: WebView?, url: String?) {
                                     super.onPageFinished(view, url)
                                     isMapLoaded = true
-                                    // Fuerza la altura del contenedor y recalcula el tamaño de Leaflet
+                                    // Fuerza la altura del contenedor; el recálculo de Leaflet lo hacen los timers del HTML
                                     view?.evaluateJavascript(
-                                        "if (window.forceMapSize) { window.forceMapSize(); }" +
-                                            " else if (window.map) { window.map.invalidateSize(); }",
+                                        "if (window.forceMapSize) { window.forceMapSize(); }",
                                         null
                                     )
 
@@ -197,6 +196,12 @@ fun InteractiveMapView(
                                                 var csPosition = cs ? cs.position : 'null';
                                                 var csDisplay = cs ? cs.display : 'null';
                                                 var styleAttr = mapEl ? (mapEl.getAttribute('style') || '').substring(0, 40) : 'null';
+                                                var errStack = '';
+                                                var errMsg = errorEl ? (errorEl.innerText || '') : '';
+                                                if (errMsg.length > 0) {
+                                                    var stackMatch = errMsg.match(/JS:[^\n]*/);
+                                                    errStack = stackMatch ? stackMatch[0].substring(0, 150) : errMsg.substring(0, 150);
+                                                }
                                                 var chain = '';
                                                 var node = mapEl ? mapEl.parentElement : null;
                                                 var depth = 0;
@@ -209,7 +214,7 @@ fun InteractiveMapView(
                                                     node = node.parentElement;
                                                     depth++;
                                                 }
-                                                return 'v=1.1.8' +
+                                                return 'v=1.1.9' +
                                                        ' | loc=' + encodeURIComponent(url) +
                                                        ' | ready=' + readyState +
                                                        ' | LType=' + lType +
@@ -224,9 +229,10 @@ fun InteractiveMapView(
                                                        ' | parents=' + (chain || 'null') +
                                                        ' | htmlLen=' + htmlLen +
                                                        ' | mapError=' + errText +
+                                                       ' | errStack=' + (errStack || 'null') +
                                                        ' | UA=' + chromeVer;
                                             } catch (e) {
-                                                return 'v=1.1.8 | EXC: ' + e.message;
+                                                return 'v=1.1.9 | EXC: ' + e.message + ' | ' + String(e.stack || '').substring(0, 150);
                                             }
                                         })()
                                     """.trimIndent()

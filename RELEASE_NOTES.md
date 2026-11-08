@@ -1,3 +1,19 @@
+## 🛠️ GeoSilence v1.1.9 - Corregir recursión infinita al inicializar el mapa
+
+Esta versión (**v1.1.9**) corrige el `RangeError: Maximum call stack size exceeded` introducido en v1.1.8, que impedía que Leaflet se inicializara.
+
+---
+
+### 🐛 Correcciones
+
+* **Corregir recursión infinita al inicializar el mapa:**
+  * Causa: `window.forceMapSize` apuntaba a `refreshMapSize`, que volvía a llamar a `forceMapSize`, generando una recursión infinita al ejecutarse desde `setTimeout`/`window.onload`.
+  * `forceMapSize` ahora es no reentrante (bandera `window.__forcing` con `try/finally`), no llama a `map.invalidateSize()` ni dispara eventos `resize`.
+  * `L.map()` se crea antes de aplicar el tamaño, `initMap` se ejecuta una única vez (`initMapOnce`) y los listeners `resize`/`orientationchange` solo llaman a `forceMapSize`.
+  * El diagnóstico `[DEBUG]` muestra `v=1.1.9` e incluye `errStack` con los primeros 150 caracteres del error (y `e.stack` en caso de excepción).
+
+---
+
 ## 🛠️ GeoSilence v1.1.8 - Forzar altura del mapa por JS y diagnóstico ampliado
 
 Esta versión (**v1.1.8**) refuerza la corrección del mapa en blanco: el contenedor `#map` seguía midiendo `337x0`, así que ahora su altura se fuerza por JavaScript con prioridad máxima y el diagnóstico `[DEBUG]` muestra más información.

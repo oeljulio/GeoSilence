@@ -4,6 +4,13 @@ Todos los cambios notables en este proyecto se documentan en este archivo, sigui
 
 ---
 
+## [1.1.9] - 2026-11-08
+
+### 🐛 Correcciones
+* **🔁 Corregir recursión infinita al inicializar el mapa:** `window.forceMapSize` estaba asignado a `refreshMapSize`, que volvía a llamar a `forceMapSize`, provocando `RangeError: Maximum call stack size exceeded` e impidiendo la inicialización de Leaflet. Ahora `forceMapSize` es no reentrante (bandera `__forcing`), no llama a `invalidateSize()` ni dispara eventos `resize`, `L.map()` se crea antes de cualquier ajuste de tamaño, `initMap` se ejecuta una sola vez y el diagnóstico incluye `v=1.1.9` y los primeros 150 caracteres del error.
+
+---
+
 ## [1.1.8] - 2026-11-08
 
 ### 🐛 Correcciones
