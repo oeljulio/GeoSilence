@@ -1,3 +1,10 @@
+## [1.3.0] - 2026-11-08
+
+### Corregido
+- **Optimización de Batería:** Implementada verificación inteligente con `PowerManager`. Si el permiso flotante nativo ya fue aceptado o la capa de personalización del fabricante exige configuración manual (Xiaomi, Huawei, etc.), la app abre directamente la pantalla de Detalles de la Aplicación.
+- **Mapa / Selección de Zona:** Eliminado el botón preset sobrante de 2,0 km para mejorar la interfaz visual, manteniendo el rango completo en el deslizador (slider) hasta 2.0 km.
+- **CI/CD Workflow:** Actualizadas las dependencias de GitHub Actions a `v5` para corregir los avisos de deprecación.
+
 # 📋 Historial de Cambios (Changelog) - GeoSilence
 
 Todos los cambios notables en este proyecto se documentan en este archivo, siguiendo el formato de [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y versionado semántico [SemVer](https://semver.org/).

@@ -19,7 +19,7 @@ GeoSilence es una app nativa de Android que silencia y descarta las notificacion
 | Gson | 2.11.0 (persistencia en `SharedPreferences`) |
 | Leaflet | 1.9.4, empaquetado en `app/src/main/assets/leaflet/` |
 
-Versión actual de la app: **1.2.0** (`versionCode 12`, `versionName "1.2.0"` en `app/build.gradle.kts`).
+Versión actual de la app: **1.3.0** (`versionCode 13`, `versionName "1.3.0"` en `app/build.gradle.kts`).
 
 Lógica de bloqueo: `GeofenceZone.blockInside` (por defecto `true`; el JSON antiguo de Gson sigue cargando) decide si se bloquea dentro de la zona o fuera de ella. `AppPreferences.shouldBlockNow()` compara `isInsideZone` con el `blockInside` de la zona guardada y es lo que consulta `NotificationBlockerService`.
 
@@ -53,7 +53,7 @@ Permisos declarados en el manifest: `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCAT
 │       │       ├── MainScreen.kt     # Pestañas (Ubicación, Apps, Historial, Ajustes),
 │       │       │                     #   borrador de zona y tarjeta de estado
 │       │       ├── MapPickerScreen.kt # Selector de zona a pantalla completa
-│       │       ├── SettingsScreen.kt
+│       │       ├── SettingsScreen.kt (incluye gestión inteligente de batería con PowerManager y acceso a ajustes del sistema)
 │       │       ├── map/InteractiveMapView.kt  # Host del WebView del mapa en Compose
 │       │       ├── map/MapHtmlProvider.kt     # HTML/CSS/JS de Leaflet
 │       │       └── theme/            # Color, Type, Theme (Material 3)
