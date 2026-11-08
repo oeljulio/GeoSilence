@@ -1,3 +1,9 @@
+## [1.4.0] - 2026-11-08
+
+### Añadido
+- **Licencia Copyleft:** Incorporado el archivo oficial `LICENSE` bajo **GNU General Public License v3.0 (GPL v3)** para proteger el código abierto contra la apropiación de terceros.
+- **Documentación legal:** Sincronizado `README.md` y `AGENTS.md` reflejando los términos de distribución abierta bajo GPL v3.
+
 ## [1.3.0] - 2026-11-08
 
 ### Corregido

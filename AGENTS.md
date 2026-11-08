@@ -2,7 +2,7 @@
 
 ## Resumen del proyecto
 
-GeoSilence es una app nativa de Android que silencia y descarta las notificaciones de las aplicaciones seleccionadas por el usuario cuando el dispositivo está dentro **o fuera** de una geocerca definida sobre un mapa (oficina, casa, universidad…), según el comportamiento elegido. El usuario elige el centro y el radio de la zona en un selector a pantalla completa, el modo de bloqueo (dentro / fuera), las apps a bloquear y el ciclo de retención del historial.
+GeoSilence es una app nativa de Android de código abierto bajo la licencia GNU GPL v3 que silencia y descarta las notificaciones de las aplicaciones seleccionadas por el usuario cuando el dispositivo está dentro **o fuera** de una geocerca definida sobre un mapa (oficina, casa, universidad…), según el comportamiento elegido. El usuario elige el centro y el radio de la zona en un selector a pantalla completa, el modo de bloqueo (dentro / fuera), las apps a bloquear y el ciclo de retención del historial.
 
 ## Stack y versiones
 
@@ -14,12 +14,12 @@ GeoSilence es una app nativa de Android que silencia y descarta las notificacion
 | compileSdk / targetSdk | 35 |
 | minSdk | 26 (Android 8.0) |
 | Jetpack Compose | BOM 2024.10.00, Material 3 + Material Icons Extended |
-| Google Play Services Location | 21.3.0 (`GeofencingClient` y `FusedLocationProviderClient`) |
+| Google Play Services Location | 21.4.0 (`GeofencingClient` y `FusedLocationProviderClient`) |
 | WorkManager | 2.9.1 |
 | Gson | 2.11.0 (persistencia en `SharedPreferences`) |
 | Leaflet | 1.9.4, empaquetado en `app/src/main/assets/leaflet/` |
 
-Versión actual de la app: **1.3.0** (`versionCode 13`, `versionName "1.3.0"` en `app/build.gradle.kts`).
+Versión actual de la app: **1.4.0** (`versionCode 14`, `versionName "1.4.0"` en `app/build.gradle.kts`).
 
 Lógica de bloqueo: `GeofenceZone.blockInside` (por defecto `true`; el JSON antiguo de Gson sigue cargando) decide si se bloquea dentro de la zona o fuera de ella. `AppPreferences.shouldBlockNow()` compara `isInsideZone` con el `blockInside` de la zona guardada y es lo que consulta `NotificationBlockerService`.
 
