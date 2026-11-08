@@ -1,5 +1,7 @@
 package com.personal.geosilence.ui
 
+import android.os.PowerManager
+
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -248,21 +250,36 @@ fun SettingsScreen(
             subtitle = "Evita que Android suspenda el servicio de geolocalización.",
             onClick = {
                 val pkg = context.packageName
-                try {
-                    val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                        data = Uri.parse("package:$pkg")
-                    }
-                    context.startActivity(intent)
-                } catch (e: Exception) {
+                val pm = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
+                val isIgnoring = pm?.isIgnoringBatteryOptimizations(pkg) == true
+
+                fun openAppDetails() {
                     try {
-                        val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
-                        context.startActivity(intent)
-                    } catch (e2: Exception) {
                         val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                             data = Uri.parse("package:$pkg")
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        }
+                        context.startActivity(intent)
+                    } catch (e: Exception) {
+                        val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
                         }
                         context.startActivity(intent)
                     }
+                }
+
+                if (!isIgnoring) {
+                    try {
+                        val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                            data = Uri.parse("package:$pkg")
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        }
+                        context.startActivity(intent)
+                    } catch (e: Exception) {
+                        openAppDetails()
+                    }
+                } else {
+                    openAppDetails()
                 }
             }
         )
