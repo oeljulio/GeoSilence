@@ -56,7 +56,7 @@
         <!-- Receiver para eventos de Geofencing (Entrada / Salida de zona) -->
         <receiver
             android:name=".service.GeofenceBroadcastReceiver"
-            android:exported="true" />
+            android:exported="false" />
 
         <!-- Receiver para restaurar Geofences al reiniciar el dispositivo -->
         <receiver

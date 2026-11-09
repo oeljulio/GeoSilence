@@ -44,7 +44,7 @@ class GeofenceManager(private val context: Context) {
                 .setCircularRegion(
                     zone.latitude,
                     zone.longitude,
-                    zone.radiusMeters.coerceAtLeast(50f)
+                    zone.radiusMeters.coerceAtLeast(MIN_RADIUS_METERS)
                 )
                 .setExpirationDuration(Geofence.NEVER_EXPIRE)
                 .setTransitionTypes(
@@ -80,6 +80,9 @@ class GeofenceManager(private val context: Context) {
     }
 
     companion object {
+        /** Radio mínimo efectivo de la geocerca; debe coincidir en el registro y en el cálculo dentro/fuera. */
+        const val MIN_RADIUS_METERS = 50f
+
         /**
          * Recalcula si el dispositivo está dentro de la zona guardada con la posición actual.
          * Si no hay zona activa o no se obtiene posición, conserva el estado previo.
@@ -98,7 +101,7 @@ class GeofenceManager(private val context: Context) {
                 results
             )
             val distanceMeters = results[0]
-            return distanceMeters <= zone.radiusMeters
+            return distanceMeters <= zone.radiusMeters.coerceAtLeast(MIN_RADIUS_METERS)
         }
     }
 }

@@ -1,3 +1,11 @@
+## [1.4.2] - 2026-11-09
+
+### Corregido
+- **Radio mínimo coherente:** `isLocationInsideZone` aplica el mismo radio mínimo de 50 m que se usa al registrar la geocerca (`GeofenceManager.MIN_RADIUS_METERS`).
+
+### Seguridad
+- `GeofenceBroadcastReceiver` pasa a `android:exported="false"`; sigue recibiendo los eventos de geocerca mediante su `PendingIntent`.
+
 ## [1.4.1] - 2026-11-09
 
 ### Corregido
