@@ -33,7 +33,7 @@ Permisos declarados en el manifest: `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCAT
 .
 ├── .github/workflows/build-apk.yml   # CI/CD: compila APK y publica release en tags v*
 ├── app/
-│   ├── build.gradle.kts              # versionCode / versionName
+│   ├── build.gradle.kts              # versionCode / versionName y buildConfig = true
 │   └── src/main/
 │       ├── AndroidManifest.xml
 │       ├── assets/leaflet/           # leaflet.js y leaflet.css (1.9.4)
@@ -71,7 +71,8 @@ Permisos declarados en el manifest: `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCAT
 La compilación se delega a GitHub Actions (`.github/workflows/build-apk.yml`), que se dispara al:
 
 - hacer push a `main` / `master` o abrir un pull request → genera y adjunta el APK de depuración como artifact;
-- subir un tag `v*` → además crea la GitHub Release con `GeoSilence-debug.apk` y el contenido de `RELEASE_NOTES.md` como cuerpo.
+- subir un tag `v*` → además crea la GitHub Release con `GeoSilence-debug.apk` y el contenido de `RELEASE_NOTES.md` como cuerpo;
+- lanzarlo a mano con `workflow_dispatch` → misma build y artifact que un push.
 
 El workflow usa JDK 17 (Temurin) y ejecuta `./gradlew assembleDebug --stacktrace`.
 
