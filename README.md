@@ -42,6 +42,11 @@
 * `ACCESS_BACKGROUND_LOCATION`: Para mantener la verificación geográfica continua en segundo plano.
 * `BIND_NOTIFICATION_LISTENER_SERVICE`: Para interceptar y descartar notificaciones de las apps seleccionadas.
 * `POST_NOTIFICATIONS`: Para mostrar notificaciones de estado y servicio del sistema.
+* `FOREGROUND_SERVICE` / `FOREGROUND_SERVICE_LOCATION`: Para ejecutar el servicio de geocerca en primer plano mientras se monitoriza la zona.
+* `INTERNET` / `ACCESS_NETWORK_STATE`: Para descargar las teselas de OpenStreetMap del mapa interactivo.
+* `QUERY_ALL_PACKAGES`: Para listar las aplicaciones instaladas y permitir seleccionar cuáles silenciar.
+* `RECEIVE_BOOT_COMPLETED`: Para restaurar la geocerca y las tareas de limpieza tras reiniciar el dispositivo.
+* `WAKE_LOCK`: Para que las transiciones de geocerca se procesen aunque el dispositivo entre en reposo.
 * `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`: Para solicitar la exención de ahorro de energía.
 
 ---

@@ -14,7 +14,7 @@ GeoSilence es una app nativa de Android de código abierto bajo la licencia GNU 
 | compileSdk / targetSdk | 35 |
 | minSdk | 26 (Android 8.0) |
 | Jetpack Compose | BOM 2024.10.00, Material 3 + Material Icons Extended |
-| Google Play Services Location | 21.4.0 (`GeofencingClient` y `FusedLocationProviderClient`) |
+| Google Play Services Location | 21.3.0 (`GeofencingClient` y `FusedLocationProviderClient`) |
 | WorkManager | 2.9.1 |
 | Gson | 2.11.0 (persistencia en `SharedPreferences`) |
 | Leaflet | 1.9.4, empaquetado en `app/src/main/assets/leaflet/` |
@@ -25,7 +25,7 @@ Lógica de bloqueo: `GeofenceZone.blockInside` (por defecto `true`; el JSON anti
 
 Servicios del sistema: `NotificationListenerService` (`BIND_NOTIFICATION_LISTENER_SERVICE`), `GeofenceBroadcastReceiver` (ENTER / EXIT / DWELL), `BootReceiver` (restaura geocercas y tareas tras reiniciar) y `HistoryCleanupWorker` / `HistoryCleanupScheduler` sobre `WorkManager`.
 
-Permisos declarados en el manifest: `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, `ACCESS_BACKGROUND_LOCATION`, `INTERNET`, `ACCESS_NETWORK_STATE`, `POST_NOTIFICATIONS`, `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_LOCATION`, `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`, `QUERY_ALL_PACKAGES`.
+Permisos declarados en el manifest: `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, `ACCESS_BACKGROUND_LOCATION`, `INTERNET`, `ACCESS_NETWORK_STATE`, `POST_NOTIFICATIONS`, `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_LOCATION`, `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`, `QUERY_ALL_PACKAGES`, `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`.
 
 ## Estructura de carpetas
 

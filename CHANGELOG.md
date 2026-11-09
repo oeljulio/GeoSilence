@@ -41,7 +41,7 @@ Todos los cambios notables en este proyecto se documentan en este archivo, sigui
 ### 🚀 Nuevas Funcionalidades
 * **🗺️ Selección de Zona Geográfica en Mapa Interactivo con Radio Configurable**:
   * **Interfaz de Mapa:** Vista cartográfica interactiva basada en OpenStreetMap y Leaflet 1.9.4 empaquetado e incrustado desde los assets locales. Permite ubicar la zona central tocando cualquier punto del mapa o arrastrando el pin directamente.
-  * **Ajuste de Radio:** Control de precisión mediante slider continuo (de 50 m a 3.000 m) y selectores rápidos tipo chips (100 m, 250 m, 500 m, 1 km, 2 km) con formateo dinámico en metros y kilómetros.
+  * **Ajuste de Radio:** Control de precisión mediante slider continuo (de 50 m a 3.000 m) y selectores rápidos tipo chips (100 m, 250 m, 500 m, 1 km) con formateo dinámico en metros y kilómetros.
   * **Visualización Dinámica:** Dibujo en tiempo real sobre el mapa de la cobertura circular representativa de la geocerca de silencio, recalculada al instante al desplazar el slider o arrastrar el pin.
   * **Interacción Táctil Optimizada:** Aislamiento de eventos gestuales en el WebView para paneo y pinch-to-zoom sin conflictos con el desplazamiento vertical de Jetpack Compose.
 * **🧹 Auto-eliminación del Historial de Notificaciones**:
