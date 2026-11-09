@@ -11,6 +11,7 @@ import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.location.LocationServices
+import com.personal.geosilence.data.AppPreferences
 import com.personal.geosilence.data.GeofenceZone
 import com.personal.geosilence.service.GeofenceBroadcastReceiver
 
@@ -79,6 +80,16 @@ class GeofenceManager(private val context: Context) {
     }
 
     companion object {
+        /**
+         * Recalcula si el dispositivo está dentro de la zona guardada con la posición actual.
+         * Si no hay zona activa o no se obtiene posición, conserva el estado previo.
+         */
+        suspend fun syncInsideState(context: Context, prefs: AppPreferences) {
+            val zone = prefs.getZones().firstOrNull { it.isEnabled } ?: return
+            val location = LocationHelper.getCurrentLocation(context) ?: return
+            prefs.isInsideZone = isLocationInsideZone(location.latitude, location.longitude, zone)
+        }
+
         fun isLocationInsideZone(latitude: Double, longitude: Double, zone: GeofenceZone): Boolean {
             val results = FloatArray(1)
             Location.distanceBetween(

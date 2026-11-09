@@ -1,3 +1,8 @@
+## [1.4.1] - 2026-11-09
+
+### Corregido
+- **Estado dentro/fuera tras reactivar o reiniciar:** al activar el interruptor maestro y al arrancar el dispositivo se vuelve a calcular `isInsideZone` con la posición actual (`GeofenceManager.syncInsideState`). Antes podía quedar un estado obsoleto hasta la siguiente transición real de la geocerca.
+
 ## [1.4.0] - 2026-11-08
 
 ### Añadido

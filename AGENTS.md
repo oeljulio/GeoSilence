@@ -19,7 +19,7 @@ GeoSilence es una app nativa de Android de código abierto bajo la licencia GNU 
 | Gson | 2.11.0 (persistencia en `SharedPreferences`) |
 | Leaflet | 1.9.4, empaquetado en `app/src/main/assets/leaflet/` |
 
-Versión actual de la app: **1.4.0** (`versionCode 14`, `versionName "1.4.0"` en `app/build.gradle.kts`).
+Versión actual de la app: **1.4.1** (`versionCode 15`, `versionName "1.4.1"` en `app/build.gradle.kts`).
 
 Lógica de bloqueo: `GeofenceZone.blockInside` (por defecto `true`; el JSON antiguo de Gson sigue cargando) decide si se bloquea dentro de la zona o fuera de ella. `AppPreferences.shouldBlockNow()` compara `isInsideZone` con el `blockInside` de la zona guardada y es lo que consulta `NotificationBlockerService`.
 

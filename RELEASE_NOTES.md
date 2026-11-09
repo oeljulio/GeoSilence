@@ -1,4 +1,3 @@
-# Novedades de GeoSilence v1.4.0 (2026-11-08)
+# Novedades de GeoSilence v1.4.1 (2026-11-09)
 
-- **Licencia Open Source (GNU GPL v3):** El proyecto es oficialmente de código abierto copyleft. Toda modificación o derivado debe publicarse bajo la misma licencia libre.
-- **Documentación actualizada:** Referencias legales e instrucciones del proyecto sincronizadas en el repositorio.
+- **Corrección:** el estado dentro/fuera de la zona se recalcula al reactivar el interruptor principal y al reiniciar el dispositivo.

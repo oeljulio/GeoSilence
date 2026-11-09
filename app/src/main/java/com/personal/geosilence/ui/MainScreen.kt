@@ -159,6 +159,7 @@ fun MainScreen(
                                 prefs.isMasterEnabled = enabled
                                 if (enabled) {
                                     geofenceManager.registerGeofences(prefs.getZones())
+                                    scope.launch { GeofenceManager.syncInsideState(context, prefs) }
                                 } else {
                                     geofenceManager.removeGeofences()
                                 }
