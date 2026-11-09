@@ -1,4 +1,4 @@
-# Novedades de GeoSilence v1.4.2 (2026-11-09)
+# Novedades de GeoSilence v1.4.3 (2026-11-09)
 
-- **Corrección:** el cálculo dentro/fuera usa el mismo radio mínimo (50 m) que la geocerca registrada.
-- **Seguridad:** el receptor de eventos de geocerca ya no está expuesto a otras aplicaciones.
+- **Permisos:** eliminados `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_LOCATION` y `WAKE_LOCK`, que la app no usaba.
+- **Documentación:** README y CHANGELOG corregidos (formato, comando de clonado y permisos).

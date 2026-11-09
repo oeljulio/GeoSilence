@@ -19,13 +19,13 @@ GeoSilence es una app nativa de Android de código abierto bajo la licencia GNU 
 | Gson | 2.11.0 (persistencia en `SharedPreferences`) |
 | Leaflet | 1.9.4, empaquetado en `app/src/main/assets/leaflet/` |
 
-Versión actual de la app: **1.4.2** (`versionCode 16`, `versionName "1.4.2"` en `app/build.gradle.kts`).
+Versión actual de la app: **1.4.3** (`versionCode 17`, `versionName "1.4.3"` en `app/build.gradle.kts`).
 
 Lógica de bloqueo: `GeofenceZone.blockInside` (por defecto `true`; el JSON antiguo de Gson sigue cargando) decide si se bloquea dentro de la zona o fuera de ella. `AppPreferences.shouldBlockNow()` compara `isInsideZone` con el `blockInside` de la zona guardada y es lo que consulta `NotificationBlockerService`.
 
 Servicios del sistema: `NotificationListenerService` (`BIND_NOTIFICATION_LISTENER_SERVICE`), `GeofenceBroadcastReceiver` (ENTER / EXIT / DWELL), `BootReceiver` (restaura geocercas y tareas tras reiniciar) y `HistoryCleanupWorker` / `HistoryCleanupScheduler` sobre `WorkManager`.
 
-Permisos declarados en el manifest: `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, `ACCESS_BACKGROUND_LOCATION`, `INTERNET`, `ACCESS_NETWORK_STATE`, `POST_NOTIFICATIONS`, `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_LOCATION`, `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`, `QUERY_ALL_PACKAGES`, `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`.
+Permisos declarados en el manifest: `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, `ACCESS_BACKGROUND_LOCATION`, `INTERNET`, `ACCESS_NETWORK_STATE`, `POST_NOTIFICATIONS`, `RECEIVE_BOOT_COMPLETED`, `QUERY_ALL_PACKAGES`, `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`.
 
 ## Estructura de carpetas
 

@@ -1,7 +1,7 @@
 # 📍 GeoSilence - Bloqueador de Notificaciones por Ubicación
 
 [![Build Android APK](https://github.com/oeljulio/GeoSilence/actions/workflows/build-apk.yml/badge.svg)](https://github.com/oeljulio/GeoSilence/actions/workflows/build-apk.yml)
-[![Version](https://img.shields.io/badge/version-v1.4.2-blue.svg)](https://github.com/oeljulio/GeoSilence/releases)
+[![Version](https://img.shields.io/badge/version-v1.4.3-blue.svg)](https://github.com/oeljulio/GeoSilence/releases)
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
 
 **GeoSilence** es una aplicación nativa para Android proyectada para silenciar o descartar automáticamente las notificaciones de aplicaciones seleccionadas (como WhatsApp, Slack, redes sociales o correo) cuando el dispositivo entra **(o sale)** de un área geográfica determinada (como tu oficina, escuela, universidad o casa).
@@ -42,12 +42,12 @@
 * `ACCESS_BACKGROUND_LOCATION`: Para mantener la verificación geográfica continua en segundo plano.
 * `BIND_NOTIFICATION_LISTENER_SERVICE`: Para interceptar y descartar notificaciones de las apps seleccionadas.
 * `POST_NOTIFICATIONS`: Para mostrar notificaciones de estado y servicio del sistema.
-* `FOREGROUND_SERVICE` / `FOREGROUND_SERVICE_LOCATION`: Para ejecutar el servicio de geocerca en primer plano mientras se monitoriza la zona.
 * `INTERNET` / `ACCESS_NETWORK_STATE`: Para descargar las teselas de OpenStreetMap del mapa interactivo.
 * `QUERY_ALL_PACKAGES`: Para listar las aplicaciones instaladas y permitir seleccionar cuáles silenciar.
 * `RECEIVE_BOOT_COMPLETED`: Para restaurar la geocerca y las tareas de limpieza tras reiniciar el dispositivo.
-* `WAKE_LOCK`: Para que las transiciones de geocerca se procesen aunque el dispositivo entre en reposo.
 * `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`: Para solicitar la exención de ahorro de energía.
+
+**Requisitos y funcionamiento:** la detección usa la API de geocercas de Google Play Services, por lo que requiere un dispositivo con GMS. No hay un intervalo de GPS fijo: es el sistema quien decide cuándo muestrear la posición para detectar la entrada o salida de la zona (habitualmente entre decenas de segundos y unos minutos, según el estado del dispositivo).
 
 ---
 
@@ -57,16 +57,20 @@ El repositorio cuenta con el wrapper de Gradle (`gradlew`), lo que permite reali
 
 ```bash
 # Clonar el repositorio
-git clone [https://github.com/oeljulio/GeoSilence.git](https://github.com/oeljulio/GeoSilence.git)
+git clone https://github.com/oeljulio/GeoSilence.git
 cd GeoSilence
 
 # Compilar APK de depuración en local
 ./gradlew assembleDebug
+```
 
-Nota de CI/CD: El flujo habitual de CI/CD en GitHub Actions (build-apk.yml) genera y compila automáticamente los APKs de prueba en los pushes a main y en los Pull Requests dirigidos a las ramas principales main o master.
+**Nota de CI/CD:** El flujo habitual de CI/CD en GitHub Actions (build-apk.yml) genera y compila automáticamente los APKs de prueba en los pushes a main y en los Pull Requests dirigidos a las ramas principales main o master.
 
-📁 Estructura del Proyecto
+---
 
+## 📁 Estructura del Proyecto
+
+```text
 GeoSilence/
 ├── .github/
 │   └── workflows/
@@ -79,7 +83,10 @@ GeoSilence/
 ├── LICENSE
 ├── README.md
 └── RELEASE_NOTES.md
+```
 
-📄 Licencia
+---
+
+## 📄 Licencia
 
 Este proyecto se distribuye bajo la licencia GNU General Public License v3.0 (GPL-3.0). Consulta el archivo LICENSE para ver los términos y condiciones completos.
