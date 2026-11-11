@@ -197,6 +197,27 @@ fun WelcomeScreen(
                     style = MaterialTheme.typography.bodyMedium
                 )
 
+                if (currentStep == 1) {
+                    Text(
+                        text = """
+                            ¿Android bloquea el acceso?
+
+                            Si has instalado GeoSilence mediante un APK, Android puede
+                            bloquear este permiso por seguridad.
+
+                            Para permitirlo:
+                            1. Abre Información de la aplicación de GeoSilence.
+                            2. Pulsa los tres puntos de la esquina superior.
+                            3. Selecciona «Permitir ajustes restringidos», si aparece.
+                            4. Vuelve aquí y activa el acceso a notificaciones.
+                        """.trimIndent(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 when (currentStep) {
