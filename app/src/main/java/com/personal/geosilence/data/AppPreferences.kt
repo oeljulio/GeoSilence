@@ -78,8 +78,12 @@ class AppPreferences(context: Context) {
     }
 
     fun shouldBlockNow(): Boolean {
-        val blockInside = getZones().firstOrNull()?.blockInside ?: true
-        return isInsideZone == blockInside
+        val activeZone = getZones().firstOrNull {
+            it.isEnabled && it.hasValidLocation()
+        }
+            ?: return false
+
+        return isInsideZone == activeZone.blockInside
     }
 
     fun getZones(): List<GeofenceZone> {

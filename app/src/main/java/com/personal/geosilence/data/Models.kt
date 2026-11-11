@@ -12,6 +12,9 @@ data class GeofenceZone(
     val blockInside: Boolean = true
 )
 
+fun GeofenceZone.hasValidLocation(): Boolean =
+    latitude != 0.0 && longitude != 0.0
+
 data class InstalledAppInfo(
     val packageName: String,
     val appName: String,

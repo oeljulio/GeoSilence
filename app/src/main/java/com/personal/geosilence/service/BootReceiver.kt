@@ -16,15 +16,43 @@ class BootReceiver : BroadcastReceiver() {
             Log.d("BootReceiver", "Dispositivo reiniciado. Restaurando Geofences...")
             val prefs = AppPreferences.getInstance(context)
             if (prefs.isMasterEnabled) {
-                val zones = prefs.getZones()
-                val geofenceManager = GeofenceManager(context)
-                geofenceManager.registerGeofences(zones)
-                // Recalcular dentro/fuera: tras el reinicio el estado guardado puede estar obsoleto
                 val pendingResult = goAsync()
                 val appContext = context.applicationContext
+                val geofenceManager = GeofenceManager(appContext)
+
+                val operationId = geofenceManager.newOperationId()
+
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
-                        GeofenceManager.syncInsideState(appContext, prefs)
+                        val registered = geofenceManager.registerGeofences(
+                            prefs.getZones(),
+                            operationId
+                        )
+
+                        if (registered) {
+                            val synced = GeofenceManager.syncInsideState(
+                                appContext,
+                                prefs,
+                                operationId
+                            )
+                            if (!synced) {
+                                Log.w(
+                                    "BootReceiver",
+                                    "No se pudo sincronizar el estado de la zona tras el reinicio"
+                                )
+                            }
+                        } else {
+                            Log.e(
+                                "BootReceiver",
+                                "No se pudieron restaurar las geovallas tras el reinicio"
+                            )
+                        }
+                    } catch (exception: Exception) {
+                        Log.e(
+                            "BootReceiver",
+                            "Error restaurando las geovallas tras el reinicio",
+                            exception
+                        )
                     } finally {
                         pendingResult.finish()
                     }

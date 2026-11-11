@@ -37,9 +37,9 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.graphics.drawable.toBitmap
 import com.personal.geosilence.data.AppPreferences
 import com.personal.geosilence.data.GeofenceZone
+import com.personal.geosilence.data.hasValidLocation
 import com.personal.geosilence.data.InstalledAppInfo
 import com.personal.geosilence.location.GeofenceManager
-import com.personal.geosilence.location.LocationHelper
 import com.personal.geosilence.ui.theme.StatusGray
 import com.personal.geosilence.ui.theme.StatusGreen
 import com.personal.geosilence.ui.theme.StatusRed
@@ -231,11 +231,28 @@ fun MainScreen(
                             onCheckedChange = { enabled ->
                                 isMasterEnabled = enabled
                                 prefs.isMasterEnabled = enabled
+                                val operationId = geofenceManager.newOperationId()
                                 if (enabled) {
-                                    geofenceManager.registerGeofences(prefs.getZones())
-                                    scope.launch { GeofenceManager.syncInsideState(context, prefs) }
+                                    scope.launch {
+                                        val registered = geofenceManager.registerGeofences(
+                                            prefs.getZones(),
+                                            operationId
+                                        )
+                                        if (
+                                            registered &&
+                                            GeofenceManager.syncInsideState(
+                                                context,
+                                                prefs,
+                                                operationId
+                                            )
+                                        ) {
+                                            isInsideZone = prefs.isInsideZone
+                                        }
+                                    }
                                 } else {
-                                    geofenceManager.removeGeofences()
+                                    scope.launch {
+                                        geofenceManager.removeGeofences(operationId)
+                                    }
                                 }
                             },
                             modifier = Modifier.padding(end = 12.dp)
@@ -288,6 +305,7 @@ fun MainScreen(
                 // Real-time Status Card
                 StatusCard(
                     isMasterEnabled = isMasterEnabled,
+                    hasActiveZone = savedZone.isEnabled && savedZone.hasValidLocation(),
                     isInsideZone = isInsideZone,
                     blockInside = savedZone.blockInside,
                     blockedCount = blockedCount,
@@ -386,19 +404,26 @@ fun MainScreen(
                             prefs.saveZones(listOf(newZone))
                             savedZone = newZone
                             zoneName = newZone.name
-                            if (isMasterEnabled) {
-                                geofenceManager.registerGeofences(listOf(newZone))
-                            }
-                            // Sincronizar el estado dentro/fuera para que el modo elegido
-                            // se aplique de inmediato, sin esperar a una transición real
+                            val operationId = geofenceManager.newOperationId()
+                            // Registrar primero y sincronizar después para evitar estados obsoletos.
                             scope.launch {
-                                val location = LocationHelper.getCurrentLocation(context)
-                                if (location != null) {
-                                    prefs.isInsideZone = GeofenceManager.isLocationInsideZone(
-                                        location.latitude,
-                                        location.longitude,
-                                        newZone
+                                val ready = if (isMasterEnabled) {
+                                    geofenceManager.registerGeofences(
+                                        listOf(newZone),
+                                        operationId
                                     )
+                                } else {
+                                    true
+                                }
+
+                                if (
+                                    ready &&
+                                    GeofenceManager.syncInsideState(
+                                        context,
+                                        prefs,
+                                        operationId
+                                    )
+                                ) {
                                     isInsideZone = prefs.isInsideZone
                                 }
                             }
@@ -459,12 +484,15 @@ fun MainScreen(
 @Composable
 fun StatusCard(
     isMasterEnabled: Boolean,
+    hasActiveZone: Boolean,
     isInsideZone: Boolean,
     blockInside: Boolean = true,
     blockedCount: Int,
     onToggleSimulation: () -> Unit
 ) {
-    val isBlocking = isMasterEnabled && (isInsideZone == blockInside)
+    val isBlocking = isMasterEnabled &&
+        hasActiveZone &&
+        (isInsideZone == blockInside)
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -496,6 +524,7 @@ fun StatusCard(
                     Text(
                         text = when {
                             !isMasterEnabled -> "Bloqueo desactivado"
+                            !hasActiveZone -> "Sin zona activa"
                             isBlocking -> "BLOQUEANDO notificaciones"
                             else -> "PERMITIENDO notificaciones"
                         },
@@ -508,7 +537,11 @@ fun StatusCard(
 
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = if (isInsideZone) "Estás dentro de la zona" else "Estás fuera de la zona",
+                text = when {
+                    !hasActiveZone -> "Configura una ubicación para activar el bloqueo"
+                    isInsideZone -> "Estás dentro de la zona"
+                    else -> "Estás fuera de la zona"
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

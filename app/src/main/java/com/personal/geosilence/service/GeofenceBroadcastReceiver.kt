@@ -7,6 +7,7 @@ import android.util.Log
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingEvent
 import com.personal.geosilence.data.AppPreferences
+import com.personal.geosilence.data.hasValidLocation
 
 class GeofenceBroadcastReceiver : BroadcastReceiver() {
 
@@ -23,6 +24,20 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
         }
 
         val prefs = AppPreferences.getInstance(context)
+        val activeZoneIds = prefs.getZones()
+            .filter { it.isEnabled && it.hasValidLocation() }
+            .map { it.id }
+            .toSet()
+
+        val belongsToActiveZone = geofencingEvent.triggeringGeofences
+            .orEmpty()
+            .any { it.requestId in activeZoneIds }
+
+        if (!belongsToActiveZone) {
+            Log.w("GeofenceReceiver", "Evento ignorado: no pertenece a una zona activa")
+            return
+        }
+
         val transition = geofencingEvent.geofenceTransition
 
         when (transition) {
