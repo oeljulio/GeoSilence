@@ -74,7 +74,7 @@ La compilación se delega a GitHub Actions (`.github/workflows/build-apk.yml`), 
 - subir un tag `v*` → además crea la GitHub Release con `GeoSilence-debug.apk` y el contenido de `RELEASE_NOTES.md` como cuerpo;
 - lanzarlo a mano con `workflow_dispatch` → misma build y artifact que un push.
 
-El workflow usa JDK 17 (Temurin) y ejecuta `./gradlew assembleDebug --stacktrace`.
+El workflow usa JDK 17 (Temurin) y ejecuta `./gradlew testDebugUnitTest assembleDebug --stacktrace`: primero valida las pruebas unitarias y después genera el APK de depuración.
 
 ## Proceso de release
 

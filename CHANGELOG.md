@@ -4,14 +4,31 @@ Todos los cambios notables en este proyecto se documentan en este archivo, sigui
 
 ---
 
-## [1.4.3] - 2026-11-09
+## [1.4.3] - 2026-11-11
 
-### Eliminado
-- Permisos `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_LOCATION` y `WAKE_LOCK` del manifest: la app no usa ningún servicio en primer plano.
+### Añadido
 
-### Documentación
-- `CHANGELOG.md`: el encabezado vuelve al principio del archivo y se corrige el rango del slider indicado en la 1.3.0 (50 m a 3.000 m).
-- `README.md`: bloques de código cerrados, comando `git clone` corregido, permisos sin uso retirados y nota sobre Google Play Services y la frecuencia de detección.
+- **Bienvenida inicial:** guía de tres pasos para explicar la configuración de GeoSilence, los permisos y los ajustes necesarios para el funcionamiento en segundo plano.
+- **Orientación sobre ajustes restringidos:** información adicional para permitir el acceso a notificaciones cuando Android exige habilitar ajustes restringidos.
+- **Pruebas unitarias:** siete pruebas para validar modelos y coordenadas geográficas.
+
+### Corregido
+
+- **Sincronización de geocercas:** coordinación de las operaciones de registro y eliminación para evitar que operaciones antiguas alteren el estado más reciente.
+- **Estado dentro/fuera:** actualización de la posición respecto a la zona al reactivar el interruptor principal y después de reiniciar el dispositivo.
+- **Validación de coordenadas:** rechazo de coordenadas no finitas, fuera de rango o correspondientes a una ubicación no válida.
+- **Radio mínimo:** aplicación coherente del mínimo de 50 m al comprobar la posición y registrar la geocerca.
+- **Receiver de geocerca:** configuración como no exportado.
+
+### Seguridad y permisos
+
+- Eliminados `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_LOCATION` y `WAKE_LOCK`, que no eran utilizados por la aplicación.
+- Se mantiene `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`, utilizado por las funciones de comprobación y configuración de batería.
+
+### CI y documentación
+
+- **GitHub Actions:** ejecución de pruebas unitarias antes de generar el APK de depuración.
+- Actualización de README, AGENTS y documentación de cambios para reflejar el comportamiento y la configuración actuales.
 
 ## [1.4.2] - 2026-11-09
 

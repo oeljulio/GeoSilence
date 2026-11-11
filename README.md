@@ -15,7 +15,7 @@
 * 🔄 **Modo de bloqueo inverso (Dentro / Fuera):** Permite elegir entre bloquear notificaciones al **estar dentro** de la zona o silenciar al **salir** de ella.
 * 📱 **Selección de aplicaciones:** Listado de aplicaciones instaladas en el dispositivo para marcar cuáles deben ser silenciadas con buscador y switches independientes.
 * 📜 **Historial de notificaciones:** Registro de notificaciones capturadas y bloqueadas con rotación e historial automático programable (`WorkManager`).
-* ⚙️ **Ajustes y batería:** Verificación inteligente de estado de optimización de batería (`PowerManager`) con redirección directa a la configuración del sistema para garantizar la ejecución en segundo plano.
+* ⚙️ **Ajustes y batería:** Comprobación del estado de optimización de batería (`PowerManager`) y accesos a los ajustes del sistema para facilitar la configuración de la ejecución en segundo plano. El comportamiento final depende de Android y del fabricante.
 
 ---
 
@@ -24,7 +24,7 @@
 1. Dirígete a la sección [Releases](https://github.com/oeljulio/GeoSilence/releases) del repositorio y descarga el archivo `.apk` de la última versión disponible.
 2. Instala el binario en tu dispositivo Android (permite la instalación desde fuentes desconocidas si el sistema lo solicita).
 3. Abre **GeoSilence** y concede los permisos requeridos de **Ubicación** y **Acceso a Notificaciones**.
-4. Ve a la pantalla de **Ajustes** y pulsa en **Optimización de Batería** para configurar la ejecución en segundo plano sin restricciones.
+4. Ve a **Ajustes** y consulta **Optimización de Batería**. Si es necesario, revisa también los ajustes de batería y ejecución en segundo plano específicos de tu dispositivo.
 
 ---
 
