@@ -6,6 +6,7 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.os.PowerManager
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -84,6 +85,10 @@ fun MainScreen(
         )
 
     var showMapPicker by remember { mutableStateOf(false) }
+    var showWelcome by remember {
+        mutableStateOf(!prefs.hasCompletedWelcome)
+    }
+    var showBackgroundGuide by remember { mutableStateOf(false) }
 
     // Apps state
     var searchQuery by remember { mutableStateOf("") }
@@ -137,7 +142,76 @@ fun MainScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        Scaffold(
+        if (showWelcome || showBackgroundGuide) {
+            WelcomeScreen(
+                onRequestLocationPermission = onRequestLocationPermission,
+                onOpenNotificationSettings = {
+                    try {
+                        context.startActivity(
+                            Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                        )
+                    } catch (_: Exception) {
+                    }
+                },
+                onOpenBackgroundSettings = {
+                    try {
+                        context.startActivity(
+                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                data = Uri.parse("package:${context.packageName}")
+                            }
+                        )
+                    } catch (_: Exception) {
+                    }
+                },
+                onOpenBatterySettings = {
+                    val pkg = context.packageName
+                    val pm = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
+                    val isIgnoring = pm?.isIgnoringBatteryOptimizations(pkg) == true
+
+                    fun openAppDetails() {
+                        try {
+                            context.startActivity(
+                                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                    data = Uri.parse("package:$pkg")
+                                }
+                            )
+                        } catch (_: Exception) {
+                            try {
+                                context.startActivity(
+                                    Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                                )
+                            } catch (_: Exception) {
+                            }
+                        }
+                    }
+
+                    if (!isIgnoring) {
+                        try {
+                            context.startActivity(
+                                Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                                    data = Uri.parse("package:$pkg")
+                                }
+                            )
+                        } catch (_: Exception) {
+                            openAppDetails()
+                        }
+                    } else {
+                        openAppDetails()
+                    }
+                },
+                onFinish = {
+                    if (showBackgroundGuide) {
+                        showBackgroundGuide = false
+                    } else {
+                        prefs.hasCompletedWelcome = true
+                        showWelcome = false
+                    }
+                },
+                initialStep = if (showBackgroundGuide) 2 else 0,
+                backgroundGuideOnly = showBackgroundGuide
+            )
+        } else {
+            Scaffold(
             topBar = {
                 TopAppBar(
                     title = {
@@ -355,7 +429,8 @@ fun MainScreen(
 
                     3 -> SettingsScreen(
                         prefs = prefs,
-                        onNavigateToHistory = { selectedTab = 2 }
+                        onNavigateToHistory = { selectedTab = 2 },
+                        onOpenBackgroundGuide = { showBackgroundGuide = true }
                     )
                 }
             }
@@ -376,6 +451,7 @@ fun MainScreen(
                 onDismiss = { showMapPicker = false },
                 onRequestLocationPermission = onRequestLocationPermission
             )
+        }
         }
     }
 }

@@ -19,6 +19,7 @@ class AppPreferences(context: Context) {
         private const val KEY_BLOCKED_COUNT = "blocked_count"
         private const val KEY_RECENT_LOGS = "recent_logs"
         private const val KEY_HISTORY_RETENTION = "history_retention_cycle"
+        private const val KEY_WELCOME_COMPLETED = "welcome_completed"
         private const val MAX_LOGS_LIMIT = 1000
 
         @Volatile
@@ -49,6 +50,10 @@ class AppPreferences(context: Context) {
             return HistoryRetentionCycle.fromId(savedId)
         }
         set(value) = prefs.edit().putString(KEY_HISTORY_RETENTION, value.id).apply()
+
+    var hasCompletedWelcome: Boolean
+        get() = prefs.getBoolean(KEY_WELCOME_COMPLETED, false)
+        set(value) = prefs.edit().putBoolean(KEY_WELCOME_COMPLETED, value).apply()
 
     fun incrementBlockedCount() {
         blockedCount = blockedCount + 1

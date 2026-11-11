@@ -37,7 +37,8 @@ import kotlinx.coroutines.withContext
 @Composable
 fun SettingsScreen(
     prefs: AppPreferences,
-    onNavigateToHistory: () -> Unit = {}
+    onNavigateToHistory: () -> Unit = {},
+    onOpenBackgroundGuide: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -240,6 +241,14 @@ fun SettingsScreen(
                 val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
                 context.startActivity(intent)
             }
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+        SettingsActionCard(
+            icon = Icons.Default.Security,
+            title = "Protección en segundo plano",
+            subtitle = "Consulta cómo evitar que el fabricante cierre GeoSilence.",
+            onClick = onOpenBackgroundGuide
         )
 
         Spacer(modifier = Modifier.height(8.dp))
