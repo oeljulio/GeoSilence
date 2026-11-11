@@ -81,8 +81,8 @@ El workflow usa JDK 17 (Temurin) y ejecuta `./gradlew assembleDebug --stacktrace
 1. Subir `versionName` y `versionCode` en `app/build.gradle.kts` (el `versionCode` nunca baja).
 2. Actualizar `CHANGELOG.md` con la entrada de la nueva versión y `RELEASE_NOTES.md` con las notas que se publicarán en la release.
 3. Actualizar la tabla de versiones de este archivo y del `README.md` si cambian.
-4. `git add -A` y commit con Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`…).
-5. `git push origin main`.
+4. Revisar `git status` y `git --no-pager diff`; añadir únicamente archivos concretos con `git add <archivo>` y revisar `git diff --cached` antes del commit.
+5. Hacer `git push origin main` únicamente con autorización expresa del usuario.
 6. Crear y subir el tag: `git tag vX.Y.Z && git push origin vX.Y.Z`.
 
 Solo se crea el tag cuando el usuario lo indica expresamente, ya que dispara la publicación de la release.

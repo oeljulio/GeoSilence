@@ -75,7 +75,10 @@ fun MainScreen(
     var radiusMeters by remember { mutableFloatStateOf(savedZone.radiusMeters) }
     var blockInside by remember { mutableStateOf(savedZone.blockInside) }
 
-    val hasChosenLocation = draftLatitude != 0.0 && draftLongitude != 0.0
+    val hasChosenLocation = savedZone.copy(
+        latitude = draftLatitude,
+        longitude = draftLongitude
+    ).hasValidLocation()
     val hasChanges = hasChosenLocation && (
         zoneName != savedZone.name ||
         draftLatitude != savedZone.latitude ||
@@ -388,7 +391,7 @@ fun MainScreen(
                         blockInside = blockInside,
                         hasChosenLocation = hasChosenLocation,
                         hasChanges = hasChanges,
-                        hasSavedZone = savedZone.latitude != 0.0 && savedZone.longitude != 0.0,
+                        hasSavedZone = savedZone.hasValidLocation(),
                         onZoneNameChange = { zoneName = it },
                         onBlockInsideChange = { blockInside = it },
                         onOpenMapPicker = { showMapPicker = true },

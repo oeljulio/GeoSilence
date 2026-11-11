@@ -66,5 +66,6 @@ dependencies {
     implementation(libs.gson)
     implementation(libs.androidx.work)
 
+    testImplementation(libs.junit)
     debugImplementation(libs.androidx.ui.tooling)
 }

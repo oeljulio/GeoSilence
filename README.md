@@ -53,18 +53,16 @@
 
 ## 🛠️ Compilación y Desarrollo
 
-El repositorio cuenta con el wrapper de Gradle (`gradlew`), lo que permite realizar construcciones locales sin dependencias globales instaladas.
+Las compilaciones Android se realizan mediante **GitHub Actions**. No se
+requiere ni se admite compilar el APK localmente desde Termux.
 
-```bash
-# Clonar el repositorio
-git clone https://github.com/oeljulio/GeoSilence.git
-cd GeoSilence
+El workflow `Build Android APK` se ejecuta al subir cambios a `main` o
+`master`, al abrir Pull Requests hacia esas ramas y manualmente mediante
+`workflow_dispatch`. Ejecuta las pruebas unitarias y genera el APK de
+depuración como artefacto descargable.
 
-# Compilar APK de depuración en local
-./gradlew assembleDebug
-```
-
-**Nota de CI/CD:** El flujo habitual de CI/CD en GitHub Actions (build-apk.yml) genera y compila automáticamente los APKs de prueba en los pushes a main y en los Pull Requests dirigidos a las ramas principales main o master.
+Para obtener el APK, abre la ejecución correspondiente en la pestaña
+**Actions** del repositorio y descarga el artefacto `GeoSilence-Debug-APK`.
 
 ---
 
@@ -90,3 +88,11 @@ GeoSilence/
 ## 📄 Licencia
 
 Este proyecto se distribuye bajo la licencia GNU General Public License v3.0 (GPL-3.0). Consulta el archivo LICENSE para ver los términos y condiciones completos.
+
+## Comportamiento de las notificaciones
+
+Cuando se cumple la condición de bloqueo, GeoSilence cancela la notificación
+de la aplicación seleccionada para retirarla del panel del sistema. Android
+no permite que GeoSilence restaure esa notificación original después de
+cancelarla. La aplicación conserva únicamente un registro informativo del
+evento; no almacena ni recupera el contenido completo de la notificación.
