@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 fun WelcomeScreen(
     onRequestLocationPermission: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
+    onOpenRestrictedSettings: () -> Unit,
     onOpenBackgroundSettings: () -> Unit,
     onOpenBatterySettings: () -> Unit,
     onFinish: () -> Unit,
@@ -24,7 +25,7 @@ fun WelcomeScreen(
     backgroundGuideOnly: Boolean = false
 ) {
     var currentStep by remember(initialStep) {
-        mutableIntStateOf(initialStep.coerceIn(0, 3))
+        mutableIntStateOf(initialStep.coerceIn(0, 2))
     }
 
     val manufacturer = Build.MANUFACTURER.orEmpty()
@@ -114,15 +115,13 @@ fun WelcomeScreen(
     val titles = listOf(
         "Permiso de ubicación",
         "Acceso a notificaciones",
-        "Protección en segundo plano",
-        "Optimización de batería"
+        "Protección en segundo plano"
     )
 
     val descriptions = listOf(
         "GeoSilence necesita conocer tu ubicación para detectar cuándo entras o sales de la zona configurada.",
         "Este acceso permite detectar y descartar las notificaciones de las aplicaciones que hayas seleccionado.",
-        "Algunos fabricantes limitan o cierran las aplicaciones en segundo plano para ahorrar batería.",
-        "Android puede restringir la actividad de las aplicaciones para reducir el consumo de batería."
+        "Android y algunos fabricantes pueden limitar la actividad en segundo plano para ahorrar batería o cerrar aplicaciones."
     )
 
     Column(
@@ -162,14 +161,14 @@ fun WelcomeScreen(
 
         if (!backgroundGuideOnly) {
             LinearProgressIndicator(
-                progress = { (currentStep + 1) / 4f },
+                progress = { (currentStep + 1) / 3f },
                 modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Paso ${currentStep + 1} de 4",
+                text = "Paso ${currentStep + 1} de 3",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -230,13 +229,26 @@ fun WelcomeScreen(
                         Text("Configurar ubicación")
                     }
 
-                    1 -> OutlinedButton(
-                        onClick = onOpenNotificationSettings,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(Icons.Default.Notifications, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Activar acceso a notificaciones")
+                    1 -> {
+                        OutlinedButton(
+                            onClick = onOpenNotificationSettings,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.Notifications, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Activar acceso a notificaciones")
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        OutlinedButton(
+                            onClick = onOpenRestrictedSettings,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.Security, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Abrir ajustes restringidos")
+                        }
                     }
 
                     2 -> {
@@ -255,15 +267,17 @@ fun WelcomeScreen(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text("Abrir ajustes de GeoSilence")
                         }
-                    }
 
-                    3 -> OutlinedButton(
-                        onClick = onOpenBatterySettings,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(Icons.Default.BatteryChargingFull, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Configurar batería")
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        OutlinedButton(
+                            onClick = onOpenBatterySettings,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.BatteryChargingFull, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Configurar batería")
+                        }
                     }
                 }
             }
@@ -292,12 +306,12 @@ fun WelcomeScreen(
 
                 Button(
                     onClick = {
-                        if (currentStep < 3) currentStep++
+                        if (currentStep < 2) currentStep++
                         else onFinish()
                     },
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text(if (currentStep == 3) "Finalizar" else "Siguiente")
+                    Text(if (currentStep == 2) "Finalizar" else "Siguiente")
                 }
             }
 

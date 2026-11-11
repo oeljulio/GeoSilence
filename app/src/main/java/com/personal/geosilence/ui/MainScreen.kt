@@ -156,6 +156,16 @@ fun MainScreen(
                     } catch (_: Exception) {
                     }
                 },
+                onOpenRestrictedSettings = {
+                    try {
+                        context.startActivity(
+                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                data = Uri.parse("package:${context.packageName}")
+                            }
+                        )
+                    } catch (_: Exception) {
+                    }
+                },
                 onOpenBackgroundSettings = {
                     try {
                         context.startActivity(
