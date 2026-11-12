@@ -97,6 +97,7 @@ object LocationHelper {
             Log.e(TAG, "Excepción consultando la última ubicación", e)
             null
         }
+    }
 
     /**
      * Convierte una ubicación GPS en una dirección legible.
