@@ -6,6 +6,12 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -41,7 +47,8 @@ fun SettingsScreen(
     themeMode: AppThemeMode,
     onThemeModeChange: (AppThemeMode) -> Unit,
     onNavigateToHistory: () -> Unit = {},
-    onOpenBackgroundGuide: () -> Unit = {}
+    onOpenBackgroundGuide: () -> Unit = {},
+    onToggleSimulation: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -50,6 +57,7 @@ fun SettingsScreen(
     var selectedCycle by remember { mutableStateOf(prefs.historyRetention) }
     var cleanupStatusMessage by remember { mutableStateOf<String?>(null) }
     var isCleaning by remember { mutableStateOf(false) }
+    var isDiagnosticsExpanded by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -60,7 +68,7 @@ fun SettingsScreen(
         // Título de la sección
         Text(
             text = "Configuración",
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
         )
         Text(
@@ -74,7 +82,7 @@ fun SettingsScreen(
         // Selector de apariencia
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
             )
@@ -130,7 +138,7 @@ fun SettingsScreen(
                             .fillMaxWidth()
                             .padding(vertical = 3.dp)
                             .clickable { onThemeModeChange(mode) },
-                        shape = RoundedCornerShape(10.dp),
+                        shape = RoundedCornerShape(12.dp),
                         color = if (selected) {
                             MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
                         } else {
@@ -184,7 +192,7 @@ fun SettingsScreen(
         // Card principal: Auto-eliminación del historial
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
@@ -234,7 +242,7 @@ fun SettingsScreen(
                                     }
                                 }
                             },
-                        shape = RoundedCornerShape(10.dp),
+                        shape = RoundedCornerShape(12.dp),
                         color = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
                         else MaterialTheme.colorScheme.surface,
                         tonalElevation = if (isSelected) 2.dp else 0.dp
@@ -406,12 +414,107 @@ fun SettingsScreen(
             }
         )
 
+        // Herramientas de diagnóstico, plegadas inicialmente.
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+            )
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            isDiagnosticsExpanded = !isDiagnosticsExpanded
+                        },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.BugReport,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Diagnóstico",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "Herramientas de prueba de GeoSilence",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Icon(
+                        imageVector = if (isDiagnosticsExpanded) {
+                            Icons.Default.ExpandLess
+                        } else {
+                            Icons.Default.ExpandMore
+                        },
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                AnimatedVisibility(
+                    visible = isDiagnosticsExpanded,
+                    enter = expandVertically(
+                        animationSpec = tween(durationMillis = 220)
+                    ) + fadeIn(
+                        animationSpec = tween(durationMillis = 180)
+                    ),
+                    exit = shrinkVertically(
+                        animationSpec = tween(durationMillis = 180)
+                    ) + fadeOut(
+                        animationSpec = tween(durationMillis = 120)
+                    )
+                ) {
+                    Column {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        HorizontalDivider()
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(
+                            text = "Simulación de geovalla",
+                            fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Alterna manualmente el estado dentro/fuera de la zona para comprobar el comportamiento del bloqueo sin desplazarte.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        OutlinedButton(
+                            onClick = onToggleSimulation,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Alternar estado de prueba")
+                        }
+                    }
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.height(20.dp))
 
         // Sección Información de la Aplicación
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(14.dp),
+            shape = RoundedCornerShape(18.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
         ) {
             Column(
@@ -442,13 +545,13 @@ fun SettingsActionCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(

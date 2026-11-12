@@ -296,6 +296,88 @@ fun MainScreen(
                         )
                     }
                 )
+            },
+            bottomBar = {
+                NavigationBar(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 3.dp
+                ) {
+                    NavigationBarItem(
+                        selected = selectedTab == 0,
+                        onClick = { selectedTab = 0 },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.LocationOn,
+                                contentDescription = null
+                            )
+                        },
+                        label = {
+                            Text(
+                                "Ubicación",
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    )
+
+                    NavigationBarItem(
+                        selected = selectedTab == 1,
+                        onClick = { selectedTab = 1 },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.Apps,
+                                contentDescription = null
+                            )
+                        },
+                        label = {
+                            Text(
+                                "Apps (${prefs.getBlockedPackages().size})",
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    )
+
+                    NavigationBarItem(
+                        selected = selectedTab == 2,
+                        onClick = { selectedTab = 2 },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.History,
+                                contentDescription = null
+                            )
+                        },
+                        label = {
+                            Text(
+                                "Historial",
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    )
+
+                    NavigationBarItem(
+                        selected = selectedTab == 3,
+                        onClick = { selectedTab = 3 },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = null
+                            )
+                        },
+                        label = {
+                            Text(
+                                "Ajustes",
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    )
+                }
             }
         ) { padding ->
             Column(
@@ -346,76 +428,8 @@ fun MainScreen(
                     isInsideZone = isInsideZone,
                     blockInside = savedZone.blockInside,
                     blockedCount = blockedCount,
-                    currentAddress = currentAddress,
-                    onToggleSimulation = {
-                        // Botón para probar manualmente el estado sin moverse
-                        val newState = !isInsideZone
-                        isInsideZone = newState
-                        prefs.isInsideZone = newState
-                    }
+                    currentAddress = currentAddress
                 )
-
-                // Tabs for navigation: Zonas, Apps a Bloquear, Historial, Ajustes
-                ScrollableTabRow(
-                    selectedTabIndex = selectedTab,
-                    edgePadding = 12.dp,
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.primary,
-                    divider = { HorizontalDivider() }
-                ) {
-                    Tab(
-                        selected = selectedTab == 0,
-                        onClick = { selectedTab = 0 },
-                        text = {
-                            Text(
-                                text = "Ubicación",
-                                maxLines = 1,
-                                overflow = TextOverflow.Clip,
-                                softWrap = false
-                            )
-                        },
-                        icon = { Icon(Icons.Default.LocationOn, contentDescription = null) }
-                    )
-                    Tab(
-                        selected = selectedTab == 1,
-                        onClick = { selectedTab = 1 },
-                        text = {
-                            Text(
-                                text = "Apps (${prefs.getBlockedPackages().size})",
-                                maxLines = 1,
-                                overflow = TextOverflow.Clip,
-                                softWrap = false
-                            )
-                        },
-                        icon = { Icon(Icons.Default.Apps, contentDescription = null) }
-                    )
-                    Tab(
-                        selected = selectedTab == 2,
-                        onClick = { selectedTab = 2 },
-                        text = {
-                            Text(
-                                text = "Historial",
-                                maxLines = 1,
-                                overflow = TextOverflow.Clip,
-                                softWrap = false
-                            )
-                        },
-                        icon = { Icon(Icons.Default.History, contentDescription = null) }
-                    )
-                    Tab(
-                        selected = selectedTab == 3,
-                        onClick = { selectedTab = 3 },
-                        text = {
-                            Text(
-                                text = "Ajustes",
-                                maxLines = 1,
-                                overflow = TextOverflow.Clip,
-                                softWrap = false
-                            )
-                        },
-                        icon = { Icon(Icons.Default.Settings, contentDescription = null) }
-                    )
-                }
 
                 when (selectedTab) {
                     0 -> LocationConfigScreen(
@@ -495,7 +509,12 @@ fun MainScreen(
                         themeMode = themeMode,
                         onThemeModeChange = onThemeModeChange,
                         onNavigateToHistory = { selectedTab = 2 },
-                        onOpenBackgroundGuide = { showBackgroundGuide = true }
+                        onOpenBackgroundGuide = { showBackgroundGuide = true },
+                        onToggleSimulation = {
+                            val newState = !isInsideZone
+                            isInsideZone = newState
+                            prefs.isInsideZone = newState
+                        }
                     )
                 }
             }
@@ -528,8 +547,7 @@ fun StatusCard(
     isInsideZone: Boolean,
     blockInside: Boolean = true,
     blockedCount: Int,
-    currentAddress: String,
-    onToggleSimulation: () -> Unit
+    currentAddress: String
 ) {
     val isBlocking = isMasterEnabled &&
         hasActiveZone &&
@@ -598,20 +616,6 @@ fun StatusCard(
                 style = MaterialTheme.typography.bodyMedium
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                OutlinedButton(
-                    onClick = onToggleSimulation,
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
-                ) {
-                    Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Alternar estado (Test)", fontSize = 12.sp)
-                }
-            }
         }
     }
 }
@@ -680,28 +684,39 @@ fun LocationConfigScreen(
             .verticalScroll(scrollState)
             .padding(16.dp)
     ) {
-        Text("Configurar Zona Geográfica", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(10.dp))
+        Text(
+            "Configurar Zona Geográfica",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            "Define dónde y cuándo deben aplicarse los bloqueos.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
             value = zoneName,
             onValueChange = onZoneNameChange,
             label = { Text("Nombre del lugar (ej. Oficina, Escuela, Casa)") },
+            shape = RoundedCornerShape(16.dp),
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Resumen de la zona elegida en el selector a pantalla completa
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
             )
         ) {
-            Column(modifier = Modifier.padding(14.dp)) {
+            Column(modifier = Modifier.padding(18.dp)) {
                 if (hasChosenLocation) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
@@ -738,7 +753,8 @@ fun LocationConfigScreen(
                 Spacer(modifier = Modifier.height(10.dp))
                 Button(
                     onClick = onOpenMapPicker,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp)
                 ) {
                     Icon(Icons.Default.Map, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
@@ -747,17 +763,17 @@ fun LocationConfigScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Comportamiento: bloquear dentro de la zona o fuera de ella
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
             )
         ) {
-            Column(modifier = Modifier.padding(14.dp)) {
+            Column(modifier = Modifier.padding(18.dp)) {
                 Text(
                     text = "Comportamiento",
                     style = MaterialTheme.typography.titleSmall,
@@ -775,7 +791,7 @@ fun LocationConfigScreen(
                         checked = blockInside,
                         onCheckedChange = { checked -> onBlockInsideChange(checked) }
                     )
-                    Text("Bloquear dentro de la zona", fontSize = 14.sp)
+                    Text("Bloquear dentro de la zona", style = MaterialTheme.typography.bodyMedium)
                 }
 
                 Row(
@@ -788,7 +804,7 @@ fun LocationConfigScreen(
                         checked = !blockInside,
                         onCheckedChange = { checked -> onBlockInsideChange(!checked) }
                     )
-                    Text("Bloquear fuera de la zona", fontSize = 14.sp)
+                    Text("Bloquear fuera de la zona", style = MaterialTheme.typography.bodyMedium)
                 }
 
                 Text(
@@ -805,6 +821,7 @@ fun LocationConfigScreen(
         Button(
             onClick = onSaveZone,
             modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp),
             enabled = hasChosenLocation
         ) {
             Icon(Icons.Default.Save, contentDescription = null)
@@ -866,9 +883,10 @@ fun AppsListScreen(
             onValueChange = onSearchQueryChange,
             label = { Text("Buscar aplicación...") },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+            shape = RoundedCornerShape(16.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             singleLine = true
         )
 
@@ -877,7 +895,10 @@ fun AppsListScreen(
                 CircularProgressIndicator()
             }
         } else {
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = 16.dp)
+            ) {
                 items(filteredApps, key = { it.packageName }) { app ->
                     AppRowItem(
                         app = app,
@@ -885,7 +906,7 @@ fun AppsListScreen(
                             onToggleApp(app.packageName, isBlocked)
                         }
                     )
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), thickness = 0.5.dp)
+                    Spacer(modifier = Modifier.height(4.dp))
                 }
             }
         }
@@ -919,8 +940,13 @@ fun AppRowItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.28f)
+            )
             .clickable { onToggle(!app.isBlocked) }
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (appIconBitmap != null) {
@@ -928,14 +954,14 @@ fun AppRowItem(
                 bitmap = appIconBitmap!!,
                 contentDescription = null,
                 modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(12.dp))
             )
         } else {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
@@ -943,13 +969,13 @@ fun AppRowItem(
             }
         }
 
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(14.dp))
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = app.appName,
                 fontWeight = FontWeight.SemiBold,
-                fontSize = 15.sp,
+                style = MaterialTheme.typography.titleSmall,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -982,7 +1008,7 @@ fun HistoryScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(18.dp)
     ) {
         // Banner con información de la auto-eliminación periódica activa
         Card(
@@ -990,13 +1016,13 @@ fun HistoryScreen(
                 .fillMaxWidth()
                 .padding(bottom = 12.dp)
                 .clickable { onNavigateToSettings() },
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(18.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f))
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -1037,7 +1063,11 @@ fun HistoryScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Notificaciones Descartadas", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(
+                "Notificaciones descartadas",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
             if (logs.isNotEmpty()) {
                 TextButton(onClick = {
                     onClear()
@@ -1054,7 +1084,11 @@ fun HistoryScreen(
 
         if (logs.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Aún no se ha bloqueado ninguna notificación.", color = MaterialTheme.colorScheme.outline)
+                Text(
+                    "Aún no se ha bloqueado ninguna notificación.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.outline
+                )
             }
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
@@ -1062,15 +1096,25 @@ fun HistoryScreen(
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                            .padding(vertical = 5.dp),
+                        shape = RoundedCornerShape(18.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+                        )
                     ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
+                        Column(modifier = Modifier.padding(16.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text(log.appName, fontWeight = FontWeight.Bold)
+                                Text(
+                                    log.appName,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f)
+                                )
                                 Text(
                                     dateFormatter.format(Date(log.timestamp)),
                                     style = MaterialTheme.typography.labelSmall,
@@ -1078,7 +1122,10 @@ fun HistoryScreen(
                                 )
                             }
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text(log.title, fontSize = 13.sp)
+                            Text(
+                                log.title,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
                         }
                     }
                 }

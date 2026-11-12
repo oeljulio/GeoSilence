@@ -78,14 +78,31 @@ fun MapPickerScreen(
                 .systemBarsPadding()
         ) {
             TopAppBar(
-                title = { Text("Elegir zona", fontWeight = FontWeight.Bold) },
+                title = {
+                    Column {
+                        Text(
+                            "Elegir zona",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            "Ajusta el centro y el alcance",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onDismiss) {
                         Icon(Icons.Default.Close, contentDescription = "Cerrar")
                     }
                 },
                 actions = {
-                    TextButton(onClick = { onConfirm(latitude, longitude, radius) }) {
+                    TextButton(
+                        onClick = { onConfirm(latitude, longitude, radius) },
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                    ) {
                         Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("Listo", fontWeight = FontWeight.Bold)
@@ -135,6 +152,7 @@ fun MapPickerScreen(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
                             .padding(end = 16.dp, bottom = 36.dp),
+                        shape = RoundedCornerShape(16.dp),
                         containerColor = MaterialTheme.colorScheme.primaryContainer
                     ) {
                         Icon(Icons.Default.MyLocation, contentDescription = "Mi ubicación")
@@ -153,11 +171,11 @@ private fun RadiusPanel(radius: Float, onRadiusChange: (Float) -> Unit) {
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
-        tonalElevation = 3.dp
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f),
+        tonalElevation = 5.dp
     ) {
-        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -170,14 +188,14 @@ private fun RadiusPanel(radius: Float, onRadiusChange: (Float) -> Unit) {
                 )
                 Surface(
                     color = MaterialTheme.colorScheme.primaryContainer,
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
                         text = formatRadius(radius),
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                     )
                 }
             }
@@ -197,7 +215,7 @@ private fun RadiusPanel(radius: Float, onRadiusChange: (Float) -> Unit) {
                     FilterChip(
                         selected = abs(radius - preset) < 25f,
                         onClick = { onRadiusChange(preset) },
-                        label = { Text(formatRadius(preset), fontSize = 11.sp) }
+                        label = { Text(formatRadius(preset), fontSize = 12.sp) }
                     )
                 }
             }
