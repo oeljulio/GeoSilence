@@ -5,6 +5,8 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
+import android.location.Geocoder
+import java.util.Locale
 import com.google.android.gms.tasks.CancellationTokenSource
 import android.util.Log
 import androidx.core.content.ContextCompat
@@ -93,6 +95,38 @@ object LocationHelper {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Excepción consultando la última ubicación", e)
+            null
+        }
+
+    /**
+     * Convierte una ubicación GPS en una dirección legible.
+     * Prioriza calle y número, seguidos de localidad o municipio.
+     */
+    @Suppress("DEPRECATION")
+    fun getAddressFromLocation(context: Context, location: Location): String? {
+        if (!Geocoder.isPresent()) return null
+
+        return try {
+            val address = Geocoder(context, Locale.getDefault())
+                .getFromLocation(location.latitude, location.longitude, 1)
+                ?.firstOrNull() ?: return null
+
+            val street = listOfNotNull(
+                address.thoroughfare,
+                address.subThoroughfare
+            ).joinToString(" ").takeIf { it.isNotBlank() }
+
+            val locality = address.locality
+                ?: address.subLocality
+                ?: address.subAdminArea
+                ?: address.adminArea
+
+            listOfNotNull(street, locality)
+                .distinct()
+                .joinToString(", ")
+                .takeIf { it.isNotBlank() }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error convirtiendo coordenadas en dirección", e)
             null
         }
     }

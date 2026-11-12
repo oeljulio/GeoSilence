@@ -40,6 +40,7 @@ import com.personal.geosilence.data.GeofenceZone
 import com.personal.geosilence.data.hasValidLocation
 import com.personal.geosilence.data.InstalledAppInfo
 import com.personal.geosilence.location.GeofenceManager
+import com.personal.geosilence.location.LocationHelper
 import com.personal.geosilence.ui.theme.StatusGray
 import com.personal.geosilence.ui.theme.StatusGreen
 import com.personal.geosilence.ui.theme.StatusRed
@@ -64,6 +65,7 @@ fun MainScreen(
     var isMasterEnabled by remember { mutableStateOf(prefs.isMasterEnabled) }
     var isInsideZone by remember { mutableStateOf(prefs.isInsideZone) }
     var blockedCount by remember { mutableStateOf(prefs.blockedCount) }
+    var currentAddress by remember { mutableStateOf("Buscando ubicación...") }
 
     // Zona guardada y borrador editable
     var savedZone by remember {
@@ -141,6 +143,25 @@ fun MainScreen(
             isInsideZone = prefs.isInsideZone
             blockedCount = prefs.blockedCount
             delay(1000)
+        }
+    }
+
+    // Consulta la dirección actual sin interferir con la geovalla.
+    LaunchedEffect(hasLocationPermission) {
+        while (true) {
+            currentAddress = if (!LocationHelper.hasForegroundPermission(context)) {
+                "Permiso de ubicación no concedido"
+            } else {
+                val address = withContext(Dispatchers.IO) {
+                    val location = LocationHelper.getCurrentLocation(context)
+                    location?.let {
+                        LocationHelper.getAddressFromLocation(context, it)
+                    }
+                }
+                address ?: "Ubicación no disponible"
+            }
+
+            delay(120_000L)
         }
     }
 
@@ -322,6 +343,7 @@ fun MainScreen(
                     isInsideZone = isInsideZone,
                     blockInside = savedZone.blockInside,
                     blockedCount = blockedCount,
+                    currentAddress = currentAddress,
                     onToggleSimulation = {
                         // Botón para probar manualmente el estado sin moverse
                         val newState = !isInsideZone
@@ -501,6 +523,7 @@ fun StatusCard(
     isInsideZone: Boolean,
     blockInside: Boolean = true,
     blockedCount: Int,
+    currentAddress: String,
     onToggleSimulation: () -> Unit
 ) {
     val isBlocking = isMasterEnabled &&
@@ -559,6 +582,11 @@ fun StatusCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
+            Text(
+                text = "Tu ubicación: $currentAddress",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = "Notificaciones bloqueadas: $blockedCount",
