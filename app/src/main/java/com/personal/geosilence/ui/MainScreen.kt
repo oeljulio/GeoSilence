@@ -1065,17 +1065,24 @@ fun HistoryScreen(
         ) {
             Text(
                 "Notificaciones descartadas",
+                modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
             if (logs.isNotEmpty()) {
-                TextButton(onClick = {
-                    onClear()
-                    logs = emptyList()
-                }) {
+                Spacer(modifier = Modifier.width(8.dp))
+                TextButton(
+                    onClick = {
+                        onClear()
+                        logs = emptyList()
+                    },
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
+                ) {
                     Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Limpiar todo")
+                    Text("Limpiar", maxLines = 1, softWrap = false)
                 }
             }
         }
