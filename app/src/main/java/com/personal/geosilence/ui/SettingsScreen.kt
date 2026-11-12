@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.personal.geosilence.BuildConfig
 import com.personal.geosilence.data.AppPreferences
+import com.personal.geosilence.data.AppThemeMode
 import com.personal.geosilence.data.HistoryRetentionCycle
 import com.personal.geosilence.service.HistoryCleanupScheduler
 import kotlinx.coroutines.Dispatchers
@@ -37,6 +38,8 @@ import kotlinx.coroutines.withContext
 @Composable
 fun SettingsScreen(
     prefs: AppPreferences,
+    themeMode: AppThemeMode,
+    onThemeModeChange: (AppThemeMode) -> Unit,
     onNavigateToHistory: () -> Unit = {},
     onOpenBackgroundGuide: () -> Unit = {}
 ) {
@@ -65,6 +68,116 @@ fun SettingsScreen(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.outline
         )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Selector de apariencia
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            )
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Palette,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Apariencia",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Personaliza los colores de GeoSilence.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                val themeOptions = listOf(
+                    Triple(
+                        AppThemeMode.SYSTEM,
+                        "Automático",
+                        "Sigue el tema de tu dispositivo."
+                    ),
+                    Triple(
+                        AppThemeMode.LIGHT,
+                        "Claro",
+                        "Mantiene siempre la interfaz clara."
+                    ),
+                    Triple(
+                        AppThemeMode.DARK_AMOLED,
+                        "Oscuro AMOLED",
+                        "Fondo negro puro con detalles verde esmeralda."
+                    )
+                )
+
+                themeOptions.forEach { (mode, title, description) ->
+                    val selected = themeMode == mode
+
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 3.dp)
+                            .clickable { onThemeModeChange(mode) },
+                        shape = RoundedCornerShape(10.dp),
+                        color = if (selected) {
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                        } else {
+                            MaterialTheme.colorScheme.surface
+                        },
+                        tonalElevation = if (selected) 2.dp else 0.dp
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 10.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = selected,
+                                onClick = { onThemeModeChange(mode) }
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Icon(
+                                imageVector = when (mode) {
+                                    AppThemeMode.SYSTEM -> Icons.Default.BrightnessAuto
+                                    AppThemeMode.LIGHT -> Icons.Default.LightMode
+                                    AppThemeMode.DARK_AMOLED -> Icons.Default.DarkMode
+                                },
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = title,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 14.sp
+                                )
+                                Text(
+                                    text = description,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.outline,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 

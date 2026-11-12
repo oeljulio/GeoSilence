@@ -13,6 +13,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
+import com.personal.geosilence.data.AppPreferences
+import com.personal.geosilence.data.AppThemeMode
 import com.personal.geosilence.service.HistoryCleanupScheduler
 import com.personal.geosilence.ui.MainScreen
 import com.personal.geosilence.ui.theme.GeoSilenceTheme
@@ -53,7 +55,14 @@ class MainActivity : ComponentActivity() {
         HistoryCleanupScheduler.schedulePeriodicCleanup(applicationContext)
 
         setContent {
-            GeoSilenceTheme {
+            val prefs = remember {
+                AppPreferences.getInstance(applicationContext)
+            }
+            var themeMode by remember {
+                mutableStateOf(prefs.themeMode)
+            }
+
+            GeoSilenceTheme(themeMode = themeMode) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -62,6 +71,11 @@ class MainActivity : ComponentActivity() {
                         hasLocationPermission = hasLocationPermissionState,
                         onRequestLocationPermission = {
                             requestLocationPermissions()
+                        },
+                        themeMode = themeMode,
+                        onThemeModeChange = { selectedMode ->
+                            prefs.themeMode = selectedMode
+                            themeMode = selectedMode
                         }
                     )
                 }

@@ -13,3 +13,9 @@ val Pink40 = Color(0xFF7D5260)
 val StatusGreen = Color(0xFF4CAF50)
 val StatusRed = Color(0xFFE53935)
 val StatusGray = Color(0xFF9E9E9E)
+
+
+// Paleta esmeralda de GeoSilence
+val Emerald = Color(0xFF008F5A)
+val EmeraldLight = Color(0xFF69F0AE)
+val EmeraldDark = Color(0xFF006B45)

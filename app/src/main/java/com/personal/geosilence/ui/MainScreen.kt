@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.graphics.drawable.toBitmap
 import com.personal.geosilence.data.AppPreferences
+import com.personal.geosilence.data.AppThemeMode
 import com.personal.geosilence.data.GeofenceZone
 import com.personal.geosilence.data.hasValidLocation
 import com.personal.geosilence.data.InstalledAppInfo
@@ -55,7 +56,9 @@ import java.util.*
 @Composable
 fun MainScreen(
     hasLocationPermission: Boolean,
-    onRequestLocationPermission: () -> Unit
+    onRequestLocationPermission: () -> Unit,
+    themeMode: AppThemeMode,
+    onThemeModeChange: (AppThemeMode) -> Unit
 ) {
     val context = LocalContext.current
     val prefs = remember { AppPreferences.getInstance(context) }
@@ -489,6 +492,8 @@ fun MainScreen(
 
                     3 -> SettingsScreen(
                         prefs = prefs,
+                        themeMode = themeMode,
+                        onThemeModeChange = onThemeModeChange,
                         onNavigateToHistory = { selectedTab = 2 },
                         onOpenBackgroundGuide = { showBackgroundGuide = true }
                     )

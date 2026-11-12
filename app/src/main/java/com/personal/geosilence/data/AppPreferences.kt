@@ -5,6 +5,12 @@ import android.content.SharedPreferences
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
+enum class AppThemeMode {
+    SYSTEM,
+    LIGHT,
+    DARK_AMOLED
+}
+
 class AppPreferences(context: Context) {
 
     private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -20,6 +26,7 @@ class AppPreferences(context: Context) {
         private const val KEY_RECENT_LOGS = "recent_logs"
         private const val KEY_HISTORY_RETENTION = "history_retention_cycle"
         private const val KEY_WELCOME_COMPLETED = "welcome_completed"
+        private const val KEY_THEME_MODE = "theme_mode"
         private const val MAX_LOGS_LIMIT = 1000
 
         @Volatile
@@ -31,6 +38,15 @@ class AppPreferences(context: Context) {
             }
         }
     }
+
+    var themeMode: AppThemeMode
+        get() {
+            val savedMode = prefs.getString(KEY_THEME_MODE, AppThemeMode.SYSTEM.name)
+            return runCatching {
+                AppThemeMode.valueOf(savedMode ?: AppThemeMode.SYSTEM.name)
+            }.getOrDefault(AppThemeMode.SYSTEM)
+        }
+        set(value) = prefs.edit().putString(KEY_THEME_MODE, value.name).apply()
 
     var isMasterEnabled: Boolean
         get() = prefs.getBoolean(KEY_MASTER_ENABLED, true)
